@@ -125,7 +125,7 @@ class App extends Component {
           title={!this.state.scanning ? "Start Scanning" : "Stop Scanning"}
           onPress={() => this.startScanning()}
         ></Button>
-        <Button
+        {/* <Button
           title={this.state.pairing ? "Pairing..." : "Pair"}
           onPress={async () => await this.pair()}
         ></Button>
@@ -136,7 +136,7 @@ class App extends Component {
         <Button
           title={this.state.reading ? "Reading..." : "Read"}
           onPress={async () => await this.read()}
-        ></Button>
+        ></Button> */}
         <Text>
           {this.state.devices.length != 0
             ? "Devices Found:"
