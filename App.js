@@ -3,14 +3,11 @@ import {
   StyleSheet,
   Text,
   View,
-  PermissionsAndroid,
   Button,
   ScrollView,
+  TextInput,
 } from "react-native";
 import { BleManager } from "react-native-ble-plx";
-import RNBluetoothClassic, {
-  BluetoothDevice,
-} from "react-native-bluetooth-classic";
 
 class App extends Component {
   constructor(props) {
@@ -18,84 +15,11 @@ class App extends Component {
     this.manager = new BleManager();
     this.state = {
       scanning: false,
-      pairing: false,
-
-      connecting: false,
-      devices: [],
-      message: "No Message",
-      reading: false,
+      connected: false,
+      device: null,
+      message: "",
     };
   }
-
-  // async requestAccessFineLocationPermission() {
-  //   const granted = await PermissionsAndroid.request(
-  //     PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
-  //     {
-  //       title: "Access fine location required for discovery",
-  //       message:
-  //         "In order to perform discovery, you must enable/allow " +
-  //         "fine location access.",
-  //       buttonNeutral: 'Ask Me Later"',
-  //       buttonNegative: "Cancel",
-  //       buttonPositive: "OK",
-  //     }
-  //   );
-  //   return granted === PermissionsAndroid.RESULTS.GRANTED;
-  // }
-
-  // openSettings() {
-  //   RNBluetoothClassic.openBluetoothSettings();
-  // }
-
-  // async startScanning() {
-  //   // let granted = await this.requestAccessFineLocationPermission();
-  //   // if (!granted) {
-  //   //   throw new Error(`Access fine location was not granted`);
-  //   // }
-  //   // this.setState({ scanning: true });
-  //   // let devices = [];
-  //   // let pairedDevices = await RNBluetoothClassic.getBondedDevices();
-  //   // for (let device of pairedDevices) {
-  //   //   devices.push(device);
-  //   // }
-  //   // let connectedDevices = await RNBluetoothClassic.getConnectedDevices();
-  //   // for (let device of connectedDevices) {
-  //   //   devices.push(device);
-  //   // }
-  //   // this.setState({ devices, scanning: false });
-  // }
-
-  // async pair() {
-  //   this.setState({ pairing: true });
-  //   await RNBluetoothClassic.pairDevice(this.state.devices[0].address);
-  //   this.setState({ pairing: false });
-  // }
-
-  // async unpair() {
-  //   this.setState({ unpairing: true });
-  //   await RNBluetoothClassic.unpairDevice(this.state.devices[0].address);
-  //   this.setState({ unpairing: false });
-  // }
-
-  // async connect() {
-  //   this.setState({ connecting: true });
-  //   let connection = await this.state.devices[0].connect({
-  //     DEVICE_CHARSET: Platform.OS === "ios" ? 1536 : "utf-8",
-  //   });
-
-  //   console.log("Connected :", connection);
-  //   this.setState({ connecting: false });
-  // }
-
-  // async read() {
-  //   this.setState({ reading: true });
-  //   let message = await this.state.devices[0].read();
-  //   if (message != null) {
-  //     this.setState({ message });
-  //   }
-  //   this.setState({ reading: false });
-  //   setTimeout(await this.read(), 500);
-  // }
 
   startScanning() {
     let scanning = this.state.scanning;
@@ -108,14 +32,43 @@ class App extends Component {
         if (error) {
           return;
         }
-        if (device.name != null) {
-          console.log("Name:", device.name);
-          console.log("Local Name:", device.localName);
-          console.log("Connectable:", device.isConnectable);
-          console.log("---------------------------------");
+        if (device.name == "HMSoft") {
+          this.setState({ device });
+          this.manager.stopDeviceScan();
         }
       });
     }
+  }
+
+  connect() {
+    this.setState({ connected: false });
+    let connectedDevice = this.state.device;
+
+    connectedDevice.connect().then((device) => {
+      this.setState({ connected: true });
+      device.discoverAllServicesAndCharacteristics(null).then((services) => {
+        console.log(Object.keys(services));
+        console.log(services.solicitedServiceUUIDs);
+        console.log(services.manufacturerData);
+        console.log(services.serviceData);
+      });
+    });
+  }
+
+  disconnect() {
+    let device = this.state.device;
+    device.cancelConnection();
+    this.setState({ connected: false });
+  }
+
+  sendInformation() {
+    let device = this.state.device;
+    device.writeCharacteristicWithoutResponseForService(
+      0xffe0,
+      0xffe1,
+      "A0B0C0",
+      null
+    );
   }
 
   render() {
@@ -125,31 +78,30 @@ class App extends Component {
           title={!this.state.scanning ? "Start Scanning" : "Stop Scanning"}
           onPress={() => this.startScanning()}
         ></Button>
-        {/* <Button
-          title={this.state.pairing ? "Pairing..." : "Pair"}
-          onPress={async () => await this.pair()}
-        ></Button>
-        <Button
-          title={this.state.unpairing ? "Connecting..." : "Connect"}
-          onPress={async () => await this.connect()}
-        ></Button>
-        <Button
-          title={this.state.reading ? "Reading..." : "Read"}
-          onPress={async () => await this.read()}
-        ></Button> */}
-        <Text>
-          {this.state.devices.length != 0
-            ? "Devices Found:"
-            : "No devices Found"}
-        </Text>
-        <ScrollView>
-          {this.state.devices.map((device, deviceIndex) => (
-            <View key={deviceIndex}>
-              <Text>{device.name}</Text>
+        {this.state.device && (
+          <View style={{ marginVertical: 10 }}>
+            <View style={{ flexDirection: "row", alignItems: "center" }}>
+              <Text style={{ marginEnd: 10 }}>{this.state.device.name}</Text>
+              <Button
+                title={this.state.connected ? "Disonnect" : "Connect"}
+                onPress={() => {
+                  this.state.connected ? this.disconnect() : this.connect();
+                }}
+              ></Button>
             </View>
-          ))}
-        </ScrollView>
-        <Text>{this.state.message}</Text>
+            {this.state.connected && (
+              <View style={{ flexDirection: "row", alignItems: "center" }}>
+                <TextInput
+                  style={styles.textInputStyle}
+                  onChangeText={(message) => {
+                    this.setState({ message });
+                  }}
+                />
+                <Button title="Send" onPress={() => this.sendInformation()} />
+              </View>
+            )}
+          </View>
+        )}
       </View>
     );
   }
@@ -163,5 +115,14 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
     alignItems: "center",
     justifyContent: "center",
+  },
+  textInputStyle: {
+    height: 40,
+    width: "50%",
+    backgroundColor: "#F2F2F2",
+    elevation: 5,
+    borderRadius: 10,
+    paddingLeft: 10,
+    marginEnd: 20,
   },
 });
