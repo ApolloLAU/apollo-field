@@ -4,7 +4,8 @@
     "android": "react-native run-android",
     "ios": "react-native run-ios",
     "web": "expo start --web",
-    "eject": "expo eject"
+    "eject": "expo eject",
+    "postinstall": "yarn patch-package"
   },
   "dependencies": {
     "@config-plugins/react-native-ble-plx": "0.0.1",
@@ -21,12 +22,13 @@
     "react-native-gesture-handler": "~1.10.2",
     "react-native-reanimated": "~2.2.0",
     "react-native-screens": "~3.4.0",
-    "react-native-unimodules": "~0.14.5",
+    "react-native-unimodules": "0.14.10",
     "react-native-web": "~0.13.12",
     "with-rn-bluetooth-classic": "^1.0.1"
   },
   "devDependencies": {
-    "@babel/core": "^7.9.0"
+    "@babel/core": "^7.9.0",
+    "patch-package": "^6.4.7"
   },
   "private": true,
   "name": "expoapp",
