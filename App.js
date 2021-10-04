@@ -1,6 +1,9 @@
 import React, { Component } from "react";
 import { Text, View } from "react-native";
 import styles from "./utils/Styles";
+import * as Font from "expo-font";
+import { Raleway_400Regular } from "@expo-google-fonts/raleway";
+import AppLoading from "expo-app-loading";
 
 class App extends Component {
   constructor(props) {
@@ -11,26 +14,25 @@ class App extends Component {
     };
   }
 
+  async unCacheResources() {
+    await Font.loadAsync({
+      Raleway_400Regular,
+    });
+  }
+
   render() {
     return this.state.loadingComplete ? (
       <View style={styles.container}>
-        <Text>Loading Complete</Text>
+        <Text style={styles.textStyleMedium}>Loading Complete</Text>
       </View>
     ) : (
-      <View style={styles.container}>
-        <Text>Loading...</Text>
-      </View>
+      <AppLoading
+        startAsync={async () => await this.unCacheResources()}
+        onFinish={() => this.setState({ loadingComplete: true })}
+        onError={console.warn}
+      />
     );
   }
 }
 
 export default App;
-
-// const styles = StyleSheet.create({
-//   container: {
-//     flex: 1,
-//     backgroundColor: "#fff",
-//     alignItems: "center",
-//     justifyContent: "center",
-//   },
-// });

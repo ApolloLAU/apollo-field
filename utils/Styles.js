@@ -3,4 +3,7 @@ export default styles = {
     flex: 1,
     backgroundColor: "#FFFFFF",
   },
+  textStyleMedium: {
+    fontFamily: "Raleway_400Regular",
+  },
 };
