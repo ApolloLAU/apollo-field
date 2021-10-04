@@ -19,7 +19,7 @@
     "expo-updates": "~0.8.1",
     "react": "16.13.1",
     "react-dom": "16.13.1",
-    "react-native": "^0.66.0",
+    "react-native": "~0.63.4",
     "react-native-base64": "^0.2.1",
     "react-native-ble-plx": "^2.0.2",
     "react-native-bluetooth-classic": "^1.60.0-rc.17",
@@ -27,12 +27,12 @@
     "react-native-dropdown-picker": "^5.1.28",
     "react-native-gesture-handler": "~1.10.2",
     "react-native-modal": "^13.0.0",
-    "react-native-reanimated": "~2.2.0",
     "react-native-safe-area-context": "^3.3.2",
     "react-native-screens": "^3.4.0",
     "react-native-unimodules": "0.14.10",
     "react-native-web": "^0.17.5",
-    "with-rn-bluetooth-classic": "^1.0.1"
+    "with-rn-bluetooth-classic": "^1.0.1",
+    "react-native-reanimated": "~2.2.0"
   },
   "devDependencies": {
     "@babel/core": "^7.9.0",

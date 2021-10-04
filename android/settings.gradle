@@ -1,4 +1,4 @@
-rootProject.name = 'apollofield'
+rootProject.name = 'apollo-field'
 
 apply from: '../node_modules/react-native-unimodules/gradle.groovy'
 includeUnimodulesProjects()

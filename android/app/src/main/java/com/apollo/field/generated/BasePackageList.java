@@ -1,4 +1,4 @@
-package com.apollofield.generated;
+package com.apollo.field.generated;
 
 import java.util.Arrays;
 import java.util.List;
