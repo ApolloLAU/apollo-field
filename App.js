@@ -1,14 +1,7 @@
 import React, { Component } from "react";
-import {
-  StyleSheet,
-  Text,
-  View,
-  Button,
-  ScrollView,
-  TextInput,
-} from "react-native";
+import { StyleSheet, Text, View, Button, TextInput } from "react-native";
 import { BleManager } from "react-native-ble-plx";
-import base64 from 'react-native-base64';
+import base64 from "react-native-base64";
 
 class App extends Component {
   constructor(props) {
@@ -20,12 +13,12 @@ class App extends Component {
       device: null,
       message: "",
       serviceUUIDs: "",
-      characteristicUUID: ""
+      characteristicUUID: "",
     };
   }
 
   startScanning() {
-    console.log('SCANNING!')
+    console.log("SCANNING!");
     let scanning = this.state.scanning;
     if (scanning) {
       this.manager.stopDeviceScan();
@@ -47,72 +40,78 @@ class App extends Component {
   connect() {
     this.setState({ connected: false });
     let connectedDevice = this.state.device;
-    console.log(`CONNECTING Service UUIDs: ${connectedDevice.serviceUUIDs}`)
-    this.setState({serviceUUIDs: connectedDevice.serviceUUIDs})
-    connectedDevice.connect().then((device) => {
-      this.setState({ connected: true });
-      return device.discoverAllServicesAndCharacteristics(null)
-    }).then((mydevice) => {
-      return mydevice.services()
-    }).then(async (services) => {
-      console.log(`GOT THE SERVICES: ${services}`)
-      // console.log(services)
-      // console.log(services[0])
-      const characteristics = []
+    console.log(`CONNECTING Service UUIDs: ${connectedDevice.serviceUUIDs}`);
+    this.setState({ serviceUUIDs: connectedDevice.serviceUUIDs });
+    connectedDevice
+      .connect()
+      .then((device) => {
+        this.setState({ connected: true });
+        return device.discoverAllServicesAndCharacteristics(null);
+      })
+      .then((mydevice) => {
+        return mydevice.services();
+      })
+      .then(async (services) => {
+        console.log(`GOT THE SERVICES: ${services}`);
+        // console.log(services)
+        // console.log(services[0])
+        const characteristics = [];
 
-      for (let i = 0; i < services.length; i++) {
-        const s = services[i];
-        // console.log(`Current service: ${s}`)
-        // console.log(s)
-        const c = await s.characteristics()
-        // console.log(`GOT A C:`)
-        // console.log(c)
-        characteristics.push(c)
-      }
-      console.log('final characteristics:')
-      console.log(characteristics)
-      return characteristics.flat(5).find(c => c.isWritableWithoutResponse)
-      // console.log(Object.keys(services));
-      // console.log(services.solicitedServiceUUIDs);
-      // console.log(services.manufacturerData);
-      // console.log(services.serviceData);
-    }).then((myChar) => {
-      if (myChar) {
-        console.log('got a characteristic to send to:')
-        console.log(myChar)
-        this.setState({characteristicUUID: myChar.uuid})
-
-      }
-    });
+        for (let i = 0; i < services.length; i++) {
+          const s = services[i];
+          // console.log(`Current service: ${s}`)
+          // console.log(s)
+          const c = await s.characteristics();
+          // console.log(`GOT A C:`)
+          // console.log(c)
+          characteristics.push(c);
+        }
+        console.log("final characteristics:");
+        console.log(characteristics);
+        return characteristics.flat(5).find((c) => c.isWritableWithoutResponse);
+        // console.log(Object.keys(services));
+        // console.log(services.solicitedServiceUUIDs);
+        // console.log(services.manufacturerData);
+        // console.log(services.serviceData);
+      })
+      .then((myChar) => {
+        if (myChar) {
+          console.log("got a characteristic to send to:");
+          console.log(myChar);
+          this.setState({ characteristicUUID: myChar.uuid });
+        }
+      });
   }
 
   disconnect() {
     let device = this.state.device;
-    device.cancelConnection().then(r => this.setState({ connected: false }));
+    device.cancelConnection().then((r) => this.setState({ connected: false }));
   }
 
   sendInformation() {
-    console.log("SENDING INFORMATION")
-    console.log(this.state.serviceUUIDs[0])
-    console.log(this.state.characteristicUUID)
+    console.log("SENDING INFORMATION");
+    console.log(this.state.serviceUUIDs[0]);
+    console.log(this.state.characteristicUUID);
     let device = this.state.device;
-    device.writeCharacteristicWithResponseForService(
-      this.state.serviceUUIDs[0],
-      this.state.characteristicUUID,
+    device
+      .writeCharacteristicWithResponseForService(
+        this.state.serviceUUIDs[0],
+        this.state.characteristicUUID,
         base64.encode("Hello!"),
-      null
-    ).then((c) => {
-      console.log("DATA SENT! GETTING RESPONSE!")
-      c.monitor((error, c) => {
-        if (error) {
-          console.log('got an error')
-          console.log(error)
-        } else {
-          console.log('GOT DATA BITCHES!')
-          console.log(base64.decode(c.value))
-        }
-      })
-    });
+        null
+      )
+      .then((c) => {
+        console.log("DATA SENT! GETTING RESPONSE!");
+        c.monitor((error, c) => {
+          if (error) {
+            console.log("got an error");
+            console.log(error);
+          } else {
+            console.log("GOT DATA BITCHES!");
+            console.log(base64.decode(c.value));
+          }
+        });
+      });
   }
 
   render() {
