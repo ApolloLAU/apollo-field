@@ -28,6 +28,9 @@
         "android.permission.BLUETOOTH_ADMIN"
       ],
       "package": "com.apollo.field"
+    },
+    "ios": {
+      "bundleIdentifier": "com.apollo.field"
     }
   }
 }
