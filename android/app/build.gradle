@@ -132,11 +132,11 @@ android {
     }
 
     defaultConfig {
-        applicationId 'com.ea1ik.expoapp'
+        applicationId "com.apollofield"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1
-        versionName "1.0.0"
+        versionName "1.0"
     }
     splits {
         abi {

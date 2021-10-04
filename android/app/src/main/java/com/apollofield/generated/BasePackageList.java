@@ -1,4 +1,4 @@
-package com.ea1ik.expoapp.generated;
+package com.apollofield.generated;
 
 import java.util.Arrays;
 import java.util.List;

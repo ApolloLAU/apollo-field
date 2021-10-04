@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "expoapp",
-    "slug": "expoapp",
+    "name": "apollo-field",
+    "slug": "apollo-field",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -16,27 +16,18 @@
     "assetBundlePatterns": [
       "**/*"
     ],
-    "ios": {
-      "supportsTablet": true,
-      "bundleIdentifier": "com.plsakr.test.expoapp"
-    },
-    "android": {
-      "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#FFFFFF"
-      },
-      "permissions": [
-        "android.permission.BLUETOOTH",
-        "android.permission.BLUETOOTH_ADMIN",
-        "android.permission.ACCESS_FINE_LOCATION"
-      ],
-      "package": "com.ea1ik.expoapp"
-    },
     "web": {
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
       "@config-plugins/react-native-ble-plx"
-    ]
+    ],
+    "android": {
+      "permissions": [
+        "android.permission.BLUETOOTH",
+        "android.permission.BLUETOOTH_ADMIN"
+      ],
+      "package": "com.apollo.field"
+    }
   }
 }
