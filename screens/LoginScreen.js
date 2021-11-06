@@ -3,6 +3,7 @@ import { View, Text, TextInput, TouchableOpacity } from "react-native";
 import UserIcon from "../assets/svg/user.svg";
 import PasswordIcon from "../assets/svg/padlock.svg";
 import styles from "../utils/Styles";
+import { API } from "../api/API";
 
 class LoginScreen extends Component {
   constructor(props) {
@@ -20,7 +21,20 @@ class LoginScreen extends Component {
     let email = this.state.email;
     let password = this.state.password;
 
-    this.props.navigation.navigate("MainMenuScreen");
+    API.login(email, password).then((user) => {
+      console.log('user logged in!')
+      if (user !== undefined) {
+        return API.getWorkerForUser(user);
+      }
+    }).then((worker) => {
+      console.log('got worker for user')
+      if (worker.getRole() === 'field_worker') {
+        console.log('login complete. navigating...')
+        this.props.navigation.navigate("MainMenuScreen");
+      }
+    }).catch((e) => {
+      console.log(e);
+    })
   }
 
   render() {
