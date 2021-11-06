@@ -16,6 +16,7 @@ class MainMenuScreen extends Component {
   render() {
     return (
       <Tab.Navigator
+        initialRouteName="MissionScreen"
         screenOptions={({ route }) => ({
           headerShown: false,
           tabBarIcon: ({ focused }) => {

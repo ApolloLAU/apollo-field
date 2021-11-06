@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="18" height="20" viewBox="0 0 18 20">
+  <g id="bluetooth" transform="translate(-21.333)">
+    <g id="Group_104" data-name="Group 104" transform="translate(21.333)">
+      <g id="Group_103" data-name="Group 103" transform="translate(0)">
+        <path id="Path_118" data-name="Path 118" d="M348.251,100.587l-1.265,1.265a8.716,8.716,0,0,1,0,8.05l1.2,1.2a9.951,9.951,0,0,0,.065-10.515Z" transform="translate(-331.721 -95.872)" fill="#550c18"/>
+        <path id="Path_119" data-name="Path 119" d="M34.038,5.705,28.333,0h-1V7.585L22.748,3,21.333,4.415,26.918,10l-5.585,5.585L22.748,17l4.585-4.585V20h1l5.705-5.705L29.748,10Zm-4.7-1.875,1.88,1.88-1.88,1.875Zm1.88,10.465-1.88,1.875V12.41Z" transform="translate(-21.333)" fill="#550c18"/>
+        <path id="Path_120" data-name="Path 120" d="M261.12,166.271l2.32,2.32a6.418,6.418,0,0,0,.01-4.645Z" transform="translate(-249.88 -156.261)" fill="#550c18"/>
+      </g>
+    </g>
+  </g>
+</svg>
