@@ -15,6 +15,7 @@ import AppLoading from "expo-app-loading";
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import LoginScreen from "./screens/LoginScreen";
+import MainMenuScreen from "./screens/MainMenuScreen";
 
 const Stack = createNativeStackNavigator();
 
@@ -50,6 +51,7 @@ class App extends Component {
           }}
         >
           <Stack.Screen name="LoginScreen" component={LoginScreen} />
+          <Stack.Screen name="MainMenuScreen" component={MainMenuScreen} />
         </Stack.Navigator>
       </NavigationContainer>
     ) : (
