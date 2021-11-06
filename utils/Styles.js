@@ -3,7 +3,12 @@ export default styles = {
     flex: 1,
     backgroundColor: "#FFFFFF",
   },
-  textStyleMedium: {
-    fontFamily: "Raleway_400Regular",
+  thin10: {
+    fontFamily: "Raleway_Thin",
+    fontSize: 10,
+  },
+  bold48: {
+    fontFamily: "Raleway_Bold",
+    fontSize: 48,
   },
 };

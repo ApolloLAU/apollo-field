@@ -4,24 +4,20 @@
     "slug": "apollo-field",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/png/frs-logo-low.png",
     "splash": {
-      "image": "./assets/splash.png",
+      "image": "./assets/png/frs-logo.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
     "updates": {
       "fallbackToCacheTimeout": 0
     },
-    "assetBundlePatterns": [
-      "**/*"
-    ],
+    "assetBundlePatterns": ["**/*"],
     "web": {
-      "favicon": "./assets/favicon.png"
+      "favicon": "./assets/png/frs-logo.png"
     },
-    "plugins": [
-      "@config-plugins/react-native-ble-plx"
-    ],
+    "plugins": ["@config-plugins/react-native-ble-plx"],
     "android": {
       "permissions": [
         "android.permission.BLUETOOTH",
@@ -31,6 +27,22 @@
     },
     "ios": {
       "bundleIdentifier": "com.apollo.field"
+    },
+    "packagerOpts": {
+      "config": "metro.config.js",
+      "sourceExts": [
+        "expo.ts",
+        "expo.tsx",
+        "expo.js",
+        "expo.jsx",
+        "ts",
+        "tsx",
+        "js",
+        "jsx",
+        "json",
+        "wasm",
+        "svg"
+      ]
     }
   }
 }
