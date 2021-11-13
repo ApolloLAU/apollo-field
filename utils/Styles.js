@@ -28,6 +28,15 @@ export default styles = {
     margin: 0,
     marginTop: "auto",
   },
+  sideModalContainer: {
+    backgroundColor: "#FFFFFF",
+    width: "60%",
+    height: "100%",
+    paddingTop: 15,
+    borderBottomRightRadius: 20,
+    borderTopRightRadius: 20,
+    margin: 0,
+  },
   circle: {
     width: 15,
     height: 15,
@@ -42,6 +51,12 @@ export default styles = {
     marginHorizontal: 2,
     borderRadius: 20,
   },
+  separator: {
+    width: "100%",
+    height: 1,
+    backgroundColor: "#000000",
+    marginBottom: 20,
+  },
   modalIndicator: {
     alignSelf: "center",
     width: 75,
@@ -49,6 +64,13 @@ export default styles = {
     backgroundColor: "#E3E3E3",
     borderRadius: 10,
     marginBottom: 20,
+  },
+  statusCard: {
+    width: "90%",
+    height: 40,
+    borderRadius: 10,
+    justifyContent: "center",
+    alignItems: "center",
   },
   textInput: {
     height: 40,

@@ -7,7 +7,6 @@ import {
   SafeAreaView,
   Dimensions,
   TextInput,
-  KeyboardAvoidingView,
   ScrollView,
 } from "react-native";
 import styles from "../utils/Styles";
@@ -31,14 +30,14 @@ class MissionScreen extends Component {
   async getConnectedDevice() {
     let connectedDevices = [
       {
-        id: "ApolloECG",
+        id: "ApolloECG1",
         name: "ECG",
         status: "No readings yet",
         action: "Read Data",
       },
       {
-        id: "ApolloSPO2",
-        name: "SPO2",
+        id: "ApolloECG2",
+        name: "ECG",
         status: "No readings yet",
         action: "Read Data",
       },
