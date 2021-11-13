@@ -19,6 +19,13 @@ class MainMenuScreen extends Component {
         initialRouteName="MissionScreen"
         screenOptions={({ route }) => ({
           headerShown: false,
+          tabBarHideOnKeyboard: true,
+          tabBarStyle: [
+            {
+              display: "flex",
+            },
+            null,
+          ],
           tabBarIcon: ({ focused }) => {
             if (route.name === "MissionScreen") {
               return focused ? (
