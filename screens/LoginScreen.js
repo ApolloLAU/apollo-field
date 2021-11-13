@@ -9,9 +9,24 @@ class LoginScreen extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      email: "",
-      password: "",
+      email: "petersakr.field",
+      password: "test123",
     };
+  }
+
+  async componentDidMount() {
+    const user = await API.getLoggedInUser();
+    if (user) {
+      try {
+        const worker = await API.getWorkerForUser(user);
+        if (worker) {
+          console.log('worker already logged in. skipping login screen!')
+          this.props.navigation.navigate("MainMenuScreen");
+        }
+      } catch (e) {
+
+      }
+    }
   }
 
   /*
@@ -26,9 +41,11 @@ class LoginScreen extends Component {
       if (user !== undefined) {
         return API.getWorkerForUser(user);
       }
-    }).then((worker) => {
+    }).then(async (worker) => {
       console.log('got worker for user')
       if (worker.getRole() === 'field_worker') {
+        worker.setStatus("online");
+        await worker.save();
         console.log('login complete. navigating...')
         this.props.navigation.navigate("MainMenuScreen");
       }
@@ -57,6 +74,7 @@ class LoginScreen extends Component {
                 Email
               </Text>
               <TextInput
+                  value={this.state.email}
                 style={[styles.textInput]}
                 onChangeText={(email) => {
                   this.setState({ email });
@@ -75,6 +93,7 @@ class LoginScreen extends Component {
                 Password
               </Text>
               <TextInput
+                  value={this.state.password}
                 style={[styles.textInput]}
                 secureTextEntry={true}
                 onChangeText={(password) => {
