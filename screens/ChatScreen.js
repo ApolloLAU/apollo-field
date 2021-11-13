@@ -2,6 +2,12 @@ import React, { Component } from "react";
 import { View, Text, SafeAreaView } from "react-native";
 import styles from "../utils/Styles";
 import { GiftedChat } from "react-native-gifted-chat";
+import {
+  MessageText,
+  MessageImage,
+  Time,
+  utils,
+} from "react-native-gifted-chat";
 
 class ChatScreen extends Component {
   constructor(props) {
@@ -12,12 +18,21 @@ class ChatScreen extends Component {
       messages: [
         {
           _id: 1,
-          text: "Hello developer",
+          text: "My message",
           createdAt: new Date(),
           user: {
             _id: 2,
-            name: "Base",
+            name: "Base App",
           },
+          // image: "https://facebook.github.io/react/img/logo_og.png",
+          // You can also add a video prop:
+          // Mark the message as sent, using one tick
+          sent: true,
+          // Mark the message as received, using two tick
+          received: true,
+          // Mark the message as pending with a clock loader
+          pending: true,
+          // Any additional custom parameters are passed through
         },
       ],
     };

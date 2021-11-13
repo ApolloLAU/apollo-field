@@ -45,7 +45,7 @@ class ProfileScreen extends Component {
   getCurrentWorker() {
     let worker = {
       fullName: "Joe Smith",
-      profilePicture: require("../assets/png/frs-logo.png"),
+      profilePicture: require("../assets/png/frs-logo-low.png"),
       district: "Beirut District D003",
       status: "online",
       statusColor: "",
