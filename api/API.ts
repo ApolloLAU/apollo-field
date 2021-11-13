@@ -1,6 +1,7 @@
 import * as Parse from 'parse/react-native';
 
 const parse = require('parse/react-native');
+import { AsyncStorage } from 'react-native';
 
 class Patient extends Parse.Object {
   // first name
@@ -274,11 +275,11 @@ class Mission extends Parse.Object {
   }
 
   static getWorkerActiveMission(
-    currentWorker: Worker
+      currentWorker: MWorker
   ): Promise<Mission | null> {
     return new Parse.Query(Mission)
       .equalTo('status', 'active')
-      .equalTo('base_workers', currentWorker)
+      .equalTo('field_workers', currentWorker)
       .find()
       .then((missions: Array<Mission>) => {
         console.log('active missions:', missions);
@@ -491,6 +492,7 @@ class MWorker extends Parse.Object {
 class API {
   static initAPI() {
     console.log("Initializing Parse");
+    Parse.setAsyncStorage(AsyncStorage)
     Parse.initialize('frsAppID');
     parse.serverURL = 'https://apollo-frs-backend.herokuapp.com/parse';
 
@@ -508,26 +510,25 @@ class API {
   }
 
   static async login(username: string, pass: string) {
-    console.log(Parse);
     return Parse.User.logIn(username, pass);
   }
 
-  static getLoggedInUser(): Parse.User | undefined {
-    return Parse.User.current();
+  static async getLoggedInUser(): Promise<Parse.User | undefined> {
+    return Parse.User.currentAsync();
   }
 
-  static logOut() {
-    const currentUser = API.getLoggedInUser();
+  static async logOut() {
+    const currentUser = await API.getLoggedInUser();
     if (!currentUser) return Promise.resolve();
     return API.getWorkerForUser(currentUser)
-      .then((worker) => {
-        if (worker) {
-          worker.setStatus('offline');
-          return worker.save();
-        }
-        throw new Error('Worker was undefined');
-      })
-      .then(() => Parse.User.logOut());
+        .then((worker) => {
+          if (worker) {
+            worker.setStatus('offline');
+            return worker.save();
+          }
+          throw new Error('Worker was undefined');
+        })
+        .then(() => Parse.User.logOut());
   }
 }
 

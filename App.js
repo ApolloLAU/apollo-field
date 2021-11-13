@@ -27,11 +27,9 @@ class App extends Component {
     this.state = {
       loadingComplete: false,
     };
-    console.log("IM HERE")
   }
 
   async componentDidMount() {
-    console.log("HII!")
     API.initAPI();
   }
 
