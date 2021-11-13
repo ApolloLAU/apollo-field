@@ -12,6 +12,7 @@ import {
 import styles from "../utils/Styles";
 import BluetoothIcon from "../assets/svg/bluetooth.svg";
 import Modal from "react-native-modal";
+import {API, Mission, MWorker} from "../api/API";
 import Carousel from "react-native-snap-carousel";
 import BottomModalIndexIndicator from "../components/BottomModalIndexIndicator";
 import Chip from "../components/Chip";
@@ -35,6 +36,7 @@ class MissionScreen extends Component {
       civilianInformationModalOpen: false,
       connectedDevices: [],
       mission: {},
+      patients: [],
       activeIndex: 0,
       reading: false,
       ecgReading: [],
@@ -204,6 +206,7 @@ class MissionScreen extends Component {
         },
       ],
     };
+
     let mission = {
       id: "00432",
       civilians: [civilian1, civilian2, civilian3],
@@ -211,8 +214,33 @@ class MissionScreen extends Component {
       initialDiagnosis: "Stroke - Faint Pulse",
     };
 
-    return new Promise((resolve) => {
-      resolve(mission);
+    const currentUser = await API.getLoggedInUser();
+    if (currentUser) {
+      return API.getWorkerForUser(currentUser).then((worker) => {
+        if (worker) {
+          return Mission.getWorkerActiveMission(worker)
+        } else {
+          throw new Error("Worker does not exist")
+        }
+      }).then((mission) => {
+        if (mission !== null)
+          return mission.fetch();
+        else
+          return null;
+      }).then(async (cMission) => {
+        if (cMission !== null) {
+          await Promise.all(cMission.getPatients().map((w) => w.fetch()));
+          this.setState({patients: cMission.getPatients()})
+          return cMission;
+        } else {
+          return null;
+        }
+      });
+    }
+
+    // this should never happen.
+    return new Promise((resolve, reject) => {
+      reject();
     });
   }
 
@@ -426,58 +454,67 @@ class MissionScreen extends Component {
   };
 
   render() {
-    return this.state.loading ? (
-      <View style={styles.container}>
-        <Text>Loading...</Text>
-      </View>
-    ) : (
-      <SafeAreaView style={styles.container}>
-        <ImageBackground
-          source={require("../assets/png/apollo_splash.png")}
-          style={{
-            height: "100%",
-            flex: 1,
-          }}
-          imageStyle={{ opacity: 0.03 }}
-          resizeMode={"contain"}
-        >
-          <ScrollView>
-            <View style={{ paddingHorizontal: 20, marginBottom: 30 }}>
-              <Text
-                style={[styles.bold30, { color: "#550C18", marginBottom: 15 }]}
-              >
-                Mission {this.state.mission.id}
-              </Text>
-
-              <View style={{ marginBottom: 20 }}>
-                <Text style={[styles.semibold25, { color: "#550C18" }]}>
-                  Civilians
-                </Text>
-                <Text style={[styles.medium15, { color: "#294C60" }]}>
-                  {this.state.mission.civilians
-                    .map((civ) => civ.name)
-                    .join(", ")}
-                </Text>
-                <Text style={[styles.semibold25, { color: "#550C18" }]}>
-                  Location
-                </Text>
-                <TouchableOpacity
-                  onPress={() => {
-                    this.openMaps();
-                  }}
-                  style={{ paddingVertical: 5 }}
+    if (this.state.loading) {
+      return (
+          <View style={styles.container}>
+            <Text>Loading...</Text>
+          </View>
+      );
+    } else if (this.state.mission === null) {
+      // todo: make this pretty
+      return (
+          <View style={styles.container}>
+            <Text>No mission available...</Text>
+          </View>
+      );
+    } else {
+      // todo: depending on location and initial diagnosis text size, the entire screen may not fit and will need to be scrollable
+      return (
+          <SafeAreaView style={styles.container}>
+            <ImageBackground
+                source={require("../assets/png/frs-logo-low.png")}
+                style={{
+                  height: "100%",
+                  flex: 1,
+                }}
+                imageStyle={{opacity: 0.03}}
+                resizeMode={"contain"}
+            >
+                <ScrollView>
+              <View style={{paddingHorizontal: 20, marginBottom: 30 }}>
+                <Text
+                    style={[styles.bold30, { color: "#550C18", marginBottom: 15 }]}
                 >
-                  <Text style={[styles.medium15, { color: "#294C60" }]}>
-                    {this.state.mission.location}
+                  Mission {this.state.mission.id}
+                </Text>
+
+                <View style={{marginBottom: 20}}>
+                  <Text style={[styles.semibold25, {color: "#550C18"}]}>
+                    Civilians
                   </Text>
-                </TouchableOpacity>
-                <Text style={[styles.semibold25, { color: "#550C18" }]}>
-                  Initial Diagnosis
-                </Text>
-                <Text style={[styles.medium15, { color: "#294C60" }]}>
-                  {this.state.mission.initialDiagnosis}
-                </Text>
-              </View>
+                  <Text style={[styles.medium15, {color: "#294C60"}]}>
+                    {this.state.mission.formatPatientNames()}
+                  </Text>
+                  <Text style={[styles.semibold25, {color: "#550C18"}]}>
+                    Location
+                  </Text>
+                  <TouchableOpacity
+                      onPress={() => {
+                        this.openMaps();
+                      }}
+                      style={{paddingVertical: 5}}
+                  >
+                    <Text style={[styles.medium15, {color: "#294C60"}]}>
+                      {this.state.mission.getFormattedLocation()}
+                    </Text>
+                  </TouchableOpacity>
+                  <Text style={[styles.semibold25, {color: "#550C18"}]}>
+                    Initial Diagnosis
+                  </Text>
+                  <Text style={[styles.medium15, {color: "#294C60"}]}>
+                    {this.state.mission.getInitialDesc()}
+                  </Text>
+                </View>
 
               <View
                 style={{
