@@ -22,13 +22,25 @@ export default styles = {
   bottomModalContainer: {
     backgroundColor: "#FFFFFF",
     width: "100%",
-    paddingHorizontal: 20,
     paddingTop: 15,
-    paddingBottom: 30,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     margin: 0,
     marginTop: "auto",
+  },
+  circle: {
+    width: 15,
+    height: 15,
+    backgroundColor: "#A78288",
+    marginHorizontal: 2,
+    borderRadius: 20,
+  },
+  circleSelected: {
+    width: 15,
+    height: 15,
+    backgroundColor: "#550C18",
+    marginHorizontal: 2,
+    borderRadius: 20,
   },
   modalIndicator: {
     alignSelf: "center",
@@ -43,6 +55,13 @@ export default styles = {
     fontFamily: "Raleway_Semibold",
     fontSize: 16,
     color: "#550C18",
+  },
+  textInputAlternate: {
+    height: 40,
+    fontFamily: "Raleway_Regular",
+    fontSize: 14,
+    color: "#294C60",
+    paddingStart: 15,
   },
   thin10: {
     fontFamily: "Raleway_Thin",
@@ -62,6 +81,10 @@ export default styles = {
     fontSize: 13,
   },
   semibold15: {
+    fontFamily: "Raleway_Semibold",
+    fontSize: 15,
+  },
+  semibold18: {
     fontFamily: "Raleway_Semibold",
     fontSize: 15,
   },

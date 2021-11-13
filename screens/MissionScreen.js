@@ -1,17 +1,30 @@
 import React, { Component } from "react";
-import { View, Text, ImageBackground, TouchableOpacity } from "react-native";
+import {
+  View,
+  Text,
+  ImageBackground,
+  TouchableOpacity,
+  SafeAreaView,
+  Dimensions,
+  TextInput,
+  KeyboardAvoidingView,
+  ScrollView,
+} from "react-native";
 import styles from "../utils/Styles";
 import BluetoothIcon from "../assets/svg/bluetooth.svg";
 import Modal from "react-native-modal";
+import Carousel from "react-native-snap-carousel";
+import BottomModalIndexIndicator from "../components/BottomModalIndexIndicator";
 
 class MissionScreen extends Component {
   constructor(props) {
     super(props);
     this.state = {
       loading: true,
-      patientInformationModalOpen: false,
+      civilianInformationModalOpen: false,
       connectedDevices: [],
       mission: {},
+      activeIndex: 0,
     };
   }
 
@@ -42,9 +55,45 @@ class MissionScreen extends Component {
   }
 
   async getMissionInformation() {
+    let civilian1 = {
+      id: 1,
+      name: "John Doe",
+      dob: "1/1/1970",
+      address: "Address",
+      emergencyContact: "+961 1 234 567",
+      bloodType: "A+",
+      height: "185cm",
+      weight: "85kg",
+      allergies: "Allergty A, Allergy B",
+      chronicIllnesses: "Illness A, Illness B",
+    };
+    let civilian2 = {
+      id: 1,
+      name: "John Doe",
+      dob: "1/1/1970",
+      address: "Address",
+      emergencyContact: "+961 1 234 567",
+      bloodType: "A+",
+      height: "185cm",
+      weight: "85kg",
+      allergies: "Allergty A, Allergy B",
+      chronicIllnesses: "Illness A, Illness B",
+    };
+    let civilian3 = {
+      id: 1,
+      name: "John Doe",
+      dob: "1/1/1970",
+      address: "Address",
+      emergencyContact: "+961 1 234 567",
+      bloodType: "A+",
+      height: "185cm",
+      weight: "85kg",
+      allergies: "Allergty A, Allergy B",
+      chronicIllnesses: "Illness A, Illness B",
+    };
     let mission = {
       id: "00432",
-      civilian: "John Doe",
+      civilians: [civilian1, civilian2, civilian3],
       location: "Location of Civilian - Street - District",
       initialDiagnosis: "Stroke - Faint Pulse",
     };
@@ -58,13 +107,121 @@ class MissionScreen extends Component {
     console.log("Action for device", device.id);
   }
 
-  updatePatientInformation() {
-    this.setState({ patientInformationModalOpen: true });
+  updateCivilianInformation() {
+    this.setState({ civilianInformationModalOpen: true });
   }
 
   openMaps() {
     console.log("Open Maps");
   }
+
+  rendercivilianInformation = ({ item }) => {
+    let civilianTitleStyle = [
+      styles.semibold20,
+      { color: "#550C18", marginBottom: 15 },
+    ];
+    let titleStyle = [styles.semibold18, { color: "#550C18", marginBottom: 5 }];
+    let textInputStyle = [
+      styles.textInputAlternate,
+      styles.textInputContainer,
+      { width: "100%" },
+    ];
+
+    let mission = this.state.mission;
+
+    return (
+      <ScrollView style={{ paddingHorizontal: 20 }}>
+        <View
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+            justifyContent: "space-between",
+          }}
+        >
+          <Text style={civilianTitleStyle}>{item.name}</Text>
+          <TouchableOpacity
+            onPress={() => {
+              this.setState({ mission, civilianInformationModalOpen: false });
+            }}
+          >
+            <Text style={civilianTitleStyle}>Save</Text>
+          </TouchableOpacity>
+        </View>
+        <Text style={titleStyle}>Full Name</Text>
+        <TextInput
+          style={textInputStyle}
+          defaultValue={item.name}
+          onChangeText={(name) => {
+            item.name = name;
+          }}
+        />
+        <Text style={titleStyle}>Date Of Birth</Text>
+        <TextInput
+          style={textInputStyle}
+          defaultValue={item.dob}
+          onChangeText={(dob) => {
+            item.dob = dob;
+          }}
+        />
+        <Text style={titleStyle}>Address</Text>
+        <TextInput
+          style={textInputStyle}
+          defaultValue={item.address}
+          onChangeText={(address) => {
+            item.address = address;
+          }}
+        />
+        <Text style={titleStyle}>Emergency Contact</Text>
+        <TextInput
+          style={textInputStyle}
+          defaultValue={item.emergencyContact}
+          onChangeText={(emergencyContact) => {
+            item.emergencyContact = emergencyContact;
+          }}
+        />
+        <Text style={titleStyle}>Blood Type</Text>
+        <TextInput
+          style={textInputStyle}
+          defaultValue={item.bloodType}
+          onChangeText={(bloodType) => {
+            item.bloodType = bloodType;
+          }}
+        />
+        <Text style={titleStyle}>Height</Text>
+        <TextInput
+          style={textInputStyle}
+          defaultValue={item.height}
+          onChangeText={(height) => {
+            item.height = height;
+          }}
+        />
+        <Text style={titleStyle}>Weight</Text>
+        <TextInput
+          style={textInputStyle}
+          defaultValue={item.weight}
+          onChangeText={(weight) => {
+            item.weight = weight;
+          }}
+        />
+        <Text style={titleStyle}>Allergies</Text>
+        <TextInput
+          style={textInputStyle}
+          defaultValue={item.allergies}
+          onChangeText={(allergies) => {
+            item.allergies = allergies;
+          }}
+        />
+        <Text style={titleStyle}>Chronic Illnesses</Text>
+        <TextInput
+          style={textInputStyle}
+          defaultValue={item.chronicIllnesses}
+          onChangeText={(chronicIllnesses) => {
+            item.chronicIllnesses = chronicIllnesses;
+          }}
+        />
+      </ScrollView>
+    );
+  };
 
   render() {
     return this.state.loading ? (
@@ -72,7 +229,7 @@ class MissionScreen extends Component {
         <Text>Loading...</Text>
       </View>
     ) : (
-      <View style={styles.container}>
+      <SafeAreaView style={styles.container}>
         <ImageBackground
           source={require("../assets/png/frs-logo-low.png")}
           style={{
@@ -91,10 +248,10 @@ class MissionScreen extends Component {
 
             <View style={{ marginBottom: 20 }}>
               <Text style={[styles.semibold25, { color: "#550C18" }]}>
-                Civilian
+                Civilians
               </Text>
               <Text style={[styles.medium15, { color: "#294C60" }]}>
-                {this.state.mission.civilian}
+                {this.state.mission.civilians.map((civ) => civ.name).join(", ")}
               </Text>
               <Text style={[styles.semibold25, { color: "#550C18" }]}>
                 Location
@@ -175,11 +332,11 @@ class MissionScreen extends Component {
             </Text>
             <View style={{ flexDirection: "row", alignItems: "center" }}>
               <Text style={[styles.semibold15, { color: "#550C18", flex: 3 }]}>
-                Patient Information
+                Civilian Information
               </Text>
               <TouchableOpacity
                 onPress={() => {
-                  this.updatePatientInformation();
+                  this.updateCivilianInformation();
                 }}
                 style={[styles.buttonContainer, { height: 40, flex: 1 }]}
               >
@@ -191,22 +348,48 @@ class MissionScreen extends Component {
           </View>
         </ImageBackground>
         <Modal
-          isVisible={this.state.patientInformationModalOpen}
-          swipeDirection="down"
+          isVisible={this.state.civilianInformationModalOpen}
+          avoidKeyboard
+          scrollHorizontal
+          propagateSwipe
+          useNativeDriver
           onSwipeThreshold={200}
           onSwipeComplete={() =>
-            this.setState({ patientInformationModalOpen: false })
+            this.setState({ civilianInformationModalOpen: false })
           }
           onBackdropPress={() =>
-            this.setState({ patientInformationModalOpen: false })
+            this.setState({ civilianInformationModalOpen: false })
           }
           style={{ margin: 0 }}
         >
-          <View style={styles.bottomModalContainer}>
-            <View style={styles.modalIndicator} />
+          <View style={[styles.bottomModalContainer, { height: "75%" }]}>
+            <View
+              style={{
+                width: "100%",
+                justifyContent: "center",
+                alignItems: "center",
+              }}
+            >
+              <BottomModalIndexIndicator
+                total={this.state.mission.civilians.length}
+                current={this.state.activeIndex}
+              />
+            </View>
+            <Carousel
+              ref={(c) => {
+                this._carousel = c;
+              }}
+              loop
+              data={this.state.mission.civilians}
+              firstItem={this.state.activeIndex}
+              renderItem={this.rendercivilianInformation}
+              sliderWidth={Dimensions.get("window").width}
+              itemWidth={Dimensions.get("window").width}
+              onSnapToItem={(activeIndex) => this.setState({ activeIndex })}
+            />
           </View>
         </Modal>
-      </View>
+      </SafeAreaView>
     );
   }
 }
