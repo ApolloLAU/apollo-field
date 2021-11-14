@@ -72,6 +72,22 @@ export default styles = {
     justifyContent: "center",
     alignItems: "center",
   },
+  chipPressed: {
+    height: 40,
+    padding: 10,
+    justifyContent: "center",
+    alignItems: "center",
+    borderRadius: 10,
+    backgroundColor: "#550C18",
+  },
+  chipUnpressed: {
+    height: 40,
+    padding: 10,
+    justifyContent: "center",
+    alignItems: "center",
+    borderRadius: 10,
+    backgroundColor: "#A78288",
+  },
   textInput: {
     height: 40,
     fontFamily: "Raleway_Semibold",

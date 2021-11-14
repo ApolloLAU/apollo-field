@@ -14,6 +14,7 @@ import BluetoothIcon from "../assets/svg/bluetooth.svg";
 import Modal from "react-native-modal";
 import Carousel from "react-native-snap-carousel";
 import BottomModalIndexIndicator from "../components/BottomModalIndexIndicator";
+import Chip from "../components/Chip";
 
 class MissionScreen extends Component {
   constructor(props) {
@@ -57,6 +58,7 @@ class MissionScreen extends Component {
     let civilian1 = {
       id: 1,
       name: "John Doe",
+      sex: "Man",
       dob: "1/1/1970",
       address: "Address",
       emergencyContact: "+961 1 234 567",
@@ -64,11 +66,43 @@ class MissionScreen extends Component {
       height: "185cm",
       weight: "85kg",
       allergies: "Allergty A, Allergy B",
-      chronicIllnesses: "Illness A, Illness B",
+      abnormalities: [
+        {
+          id: "1dAVb",
+          name: "1st Degree AV Block",
+          status: false,
+        },
+        {
+          id: "RBBB",
+          name: "Right Bundle Branch Block",
+          status: false,
+        },
+        {
+          id: "LBBB",
+          name: "Left Bundle Branch Block",
+          status: false,
+        },
+        {
+          id: "SB",
+          name: "Sinus Bradycardia",
+          status: false,
+        },
+        {
+          id: "AF",
+          name: "Atrial Fibrillation",
+          status: false,
+        },
+        {
+          id: "ST",
+          name: "Sinus Tachycardia",
+          status: false,
+        },
+      ],
     };
     let civilian2 = {
       id: 1,
-      name: "John Doe",
+      name: "Jane Doe",
+      sex: "Woman",
       dob: "1/1/1970",
       address: "Address",
       emergencyContact: "+961 1 234 567",
@@ -76,11 +110,43 @@ class MissionScreen extends Component {
       height: "185cm",
       weight: "85kg",
       allergies: "Allergty A, Allergy B",
-      chronicIllnesses: "Illness A, Illness B",
+      abnormalities: [
+        {
+          id: "1dAVb",
+          name: "1st Degree AV Block",
+          status: false,
+        },
+        {
+          id: "RBBB",
+          name: "Right Bundle Branch Block",
+          status: false,
+        },
+        {
+          id: "LBBB",
+          name: "Left Bundle Branch Block",
+          status: false,
+        },
+        {
+          id: "SB",
+          name: "Sinus Bradycardia",
+          status: false,
+        },
+        {
+          id: "AF",
+          name: "Atrial Fibrillation",
+          status: false,
+        },
+        {
+          id: "ST",
+          name: "Sinus Tachycardia",
+          status: false,
+        },
+      ],
     };
     let civilian3 = {
       id: 1,
       name: "John Doe",
+      sex: "Non-Binary",
       dob: "1/1/1970",
       address: "Address",
       emergencyContact: "+961 1 234 567",
@@ -88,7 +154,38 @@ class MissionScreen extends Component {
       height: "185cm",
       weight: "85kg",
       allergies: "Allergty A, Allergy B",
-      chronicIllnesses: "Illness A, Illness B",
+      abnormalities: [
+        {
+          id: "1dAVb",
+          name: "1st Degree AV Block",
+          status: false,
+        },
+        {
+          id: "RBBB",
+          name: "Right Bundle Branch Block",
+          status: false,
+        },
+        {
+          id: "LBBB",
+          name: "Left Bundle Branch Block",
+          status: false,
+        },
+        {
+          id: "SB",
+          name: "Sinus Bradycardia",
+          status: false,
+        },
+        {
+          id: "AF",
+          name: "Atrial Fibrillation",
+          status: false,
+        },
+        {
+          id: "ST",
+          name: "Sinus Tachycardia",
+          status: false,
+        },
+      ],
     };
     let mission = {
       id: "00432",
@@ -114,7 +211,7 @@ class MissionScreen extends Component {
     console.log("Open Maps");
   }
 
-  rendercivilianInformation = ({ item }) => {
+  renderCivilianInformation = ({ item }) => {
     let civilianTitleStyle = [
       styles.semibold20,
       { color: "#550C18", marginBottom: 15 },
@@ -154,6 +251,47 @@ class MissionScreen extends Component {
             item.name = name;
           }}
         />
+        <Text style={titleStyle}>Sex</Text>
+
+        <View
+          style={{
+            flexDirection: "row",
+            flexWrap: "wrap",
+            justifyContent: "center",
+            marginBottom: 10,
+          }}
+        >
+          <Chip
+            pressed={item.sex == "Man"}
+            style={{ width: "30%", margin: 5 }}
+            chipText="Man"
+            onPress={() => {
+              item.sex = "Man";
+              let mission = this.state.mission;
+              this.setState({ mission });
+            }}
+          />
+          <Chip
+            pressed={item.sex == "Woman"}
+            style={{ width: "30%", margin: 5 }}
+            chipText="Woman"
+            onPress={() => {
+              item.sex = "Woman";
+              let mission = this.state.mission;
+              this.setState({ mission });
+            }}
+          />
+          <Chip
+            pressed={item.sex == "Non-Binary"}
+            style={{ width: "30%", margin: 5 }}
+            chipText="Non-Binary"
+            onPress={() => {
+              item.sex = "Non-Binary";
+              let mission = this.state.mission;
+              this.setState({ mission });
+            }}
+          />
+        </View>
         <Text style={titleStyle}>Date Of Birth</Text>
         <TextInput
           style={textInputStyle}
@@ -211,13 +349,28 @@ class MissionScreen extends Component {
           }}
         />
         <Text style={titleStyle}>Chronic Illnesses</Text>
-        <TextInput
-          style={textInputStyle}
-          defaultValue={item.chronicIllnesses}
-          onChangeText={(chronicIllnesses) => {
-            item.chronicIllnesses = chronicIllnesses;
+        <View
+          style={{
+            flexDirection: "row",
+            flexWrap: "wrap",
+            justifyContent: "center",
+            marginBottom: 10,
           }}
-        />
+        >
+          {item.abnormalities.map((abn, abnIndex) => (
+            <Chip
+              key={abnIndex}
+              pressed={abn.status}
+              style={{ width: "45%", margin: 5 }}
+              chipText={abn.name}
+              onPress={() => {
+                abn.status = !abn.status;
+                let mission = this.state.mission;
+                this.setState({ mission });
+              }}
+            />
+          ))}
+        </View>
       </ScrollView>
     );
   };
@@ -381,7 +534,7 @@ class MissionScreen extends Component {
               loop
               data={this.state.mission.civilians}
               firstItem={this.state.activeIndex}
-              renderItem={this.rendercivilianInformation}
+              renderItem={this.renderCivilianInformation}
               sliderWidth={Dimensions.get("window").width}
               itemWidth={Dimensions.get("window").width}
               onSnapToItem={(activeIndex) => this.setState({ activeIndex })}
