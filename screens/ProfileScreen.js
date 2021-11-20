@@ -13,6 +13,7 @@ import BluetoothIcon from "../assets/svg/bluetooth_blue.svg";
 import CompletedIcon from "../assets/svg/completed.svg";
 import MissionCard from "../components/MissionCard";
 import Modal from "react-native-modal";
+import {API} from "../api/API";
 
 class ProfileScreen extends Component {
   constructor(props) {
@@ -21,7 +22,8 @@ class ProfileScreen extends Component {
       loading: true,
       settingsModalOpen: false,
       statusModalOpen: false,
-      worker: {},
+      worker: undefined,
+      color: "#7E7E7E",
       connectedDevices: [
         {
           id: "ApolloECG1",
@@ -42,30 +44,33 @@ class ProfileScreen extends Component {
     this.setState({ worker, loading: false });
   }
 
-  getCurrentWorker() {
-    let worker = {
-      fullName: "Joe Smith",
-      profilePicture: require("../assets/png/frs-logo-low.png"),
-      district: "Beirut District D003",
-      status: "online",
-      statusColor: "",
-      completedMissions: [
-        {
-          name: "Mission 1",
-          location: "Location 1",
-        },
-        {
-          name: "Mission 2",
-          location: "Location 2",
-        },
-        {
-          name: "Mission 3",
-          location: "Location 3",
-        },
-      ],
-    };
+  async getCurrentWorker() {
+    // let worker = {
+    //   fullName: "Joe Smith",
+    //   profilePicture: require("../assets/png/frs-logo-low.png"),
+    //   district: "Beirut District D003",
+    //   status: "online",
+    //   statusColor: "",
+    //   completedMissions: [
+    //     {
+    //       name: "Mission 1",
+    //       location: "Location 1",
+    //     },
+    //     {
+    //       name: "Mission 2",
+    //       location: "Location 2",
+    //     },
+    //     {
+    //       name: "Mission 3",
+    //       location: "Location 3",
+    //     },
+    //   ],
+    // };
+    let user = await API.getLoggedInUser();
+    let worker = await API.getWorkerForUser(user);
+    console.log('worker', worker)
 
-    switch (worker.status) {
+    switch (worker.getStatus()) {
       case "online":
         worker.statusColor = "#00FF19";
         break;
@@ -79,10 +84,7 @@ class ProfileScreen extends Component {
         worker.statusColor = "#7E7E7E";
         break;
     }
-
-    return new Promise((resolve) => {
-      resolve(worker);
-    });
+    return worker;
   }
 
   render() {
@@ -111,7 +113,7 @@ class ProfileScreen extends Component {
               onPress={() => this.setState({ statusModalOpen: true })}
             >
               <Image
-                source={this.state.worker.profilePicture}
+                source={{uri: this.state.worker.getImgURL()}}
                 style={{
                   width: 125,
                   height: 125,
@@ -131,10 +133,10 @@ class ProfileScreen extends Component {
             }}
           >
             <Text style={[styles.semibold25, { color: "#550C18" }]}>
-              {this.state.worker.fullName}
+              {this.state.worker.getFormattedName()}
             </Text>
             <Text style={[styles.semibold13, { color: "#550C18" }]}>
-              {this.state.worker.district}
+              {this.state.worker.getDistrict().getName()}
             </Text>
           </View>
           <View style={{ paddingHorizontal: 20 }}>
@@ -180,17 +182,7 @@ class ProfileScreen extends Component {
               <View style={{ marginEnd: 10 }}>
                 <CompletedIcon width={25} height={25} />
               </View>
-              <Text style={[styles.semibold20, { color: "#294C60" }]}>
-                Completed Missions
-              </Text>
             </View>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-              {this.state.worker.completedMissions.map(
-                (mission, missionIndex) => (
-                  <MissionCard key={missionIndex} mission={mission} />
-                )
-              )}
-            </ScrollView>
           </View>
         </View>
         <Modal
