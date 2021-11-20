@@ -29,15 +29,43 @@ class Patient extends Parse.Object {
     p.setBloodType('');
     p.setPrevConditions('');
     p.setCellNbr('');
+    p.setEmergencyNbr('');
     p.setDOB(new Date(0));
     p.setLastName('');
     p.setWeight(-1.0);
+    p.setSex('');
+    p.set('abnormalities', []);
     return p;
   }
 
   static getAllPatients(): Promise<Array<Patient>> {
     return new Parse.Query(Patient).find();
   }
+
+  getAbnormalities() {
+    return this.get('abnormalities') || [];
+  }
+
+  setAbnormalities(abns: []) {
+    this.set('abnormalities', abns);
+  }
+
+  getSex(): string {
+    return this.get('sex');
+  }
+
+  setSex(sex) {
+    this.set('sex', sex)
+  }
+
+  getEmergencyNbr(): string {
+    return this.get('emergency_nbr');
+  }
+
+  setEmergencyNbr(nbr: string) {
+    this.set('emergency_nbr', nbr);
+  }
+
 
   getFirstName(): string {
     return this.get('first_name');
@@ -133,6 +161,10 @@ class District extends Parse.Object {
     this.set('name', name);
   }
 
+  getName(): string {
+    return this.get('name');
+  }
+
   setLoc(loc: Parse.GeoPoint) {
     this.set('location', loc);
   }
@@ -199,7 +231,7 @@ class ChatMessage extends Parse.Object {
   ): Parse.Query<ChatMessage> {
     return new Parse.Query(ChatMessage)
       .equalTo('for_mission', missionId)
-      .ascending('createdAt');
+      .descending('createdAt');
   }
 
   static getMessagesForMissionId(
@@ -274,12 +306,16 @@ class Mission extends Parse.Object {
       .first();
   }
 
+  static getWorkerActiveMissionQuery(currentWorker: MWorker): Parse.Query {
+    return new Parse.Query(Mission)
+        .equalTo('status', 'active')
+        .equalTo('field_workers', currentWorker)
+  }
+
   static getWorkerActiveMission(
       currentWorker: MWorker
   ): Promise<Mission | null> {
-    return new Parse.Query(Mission)
-      .equalTo('status', 'active')
-      .equalTo('field_workers', currentWorker)
+    return this.getWorkerActiveMissionQuery(currentWorker)
       .find()
       .then((missions: Array<Mission>) => {
         console.log('active missions:', missions);
@@ -364,6 +400,16 @@ class Mission extends Parse.Object {
       return 'Multiple Patients';
     }
     return 'No patients';
+  }
+
+  static getMissionQueryForId(missionId: string) {
+    return new Parse.Query(Mission).equalTo('objectId', missionId);
+  }
+
+  getQueryForPatients() {
+    const patients = this.getPatients();
+    const pIds = patients.map((p) => p.id);
+    return new Parse.Query(Patient).containedIn('objectId', pIds);
   }
 }
 
