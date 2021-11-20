@@ -119,9 +119,8 @@ class MissionScreen extends Component {
       });
     }
 
-    // this should never happen.
-    return new Promise((resolve, reject) => {
-      reject();
+    return new Promise((resolve) => {
+      resolve(mission);
     });
   }
 
