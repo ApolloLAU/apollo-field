@@ -7,7 +7,7 @@ class MissionCard extends Component {
     return (
       <TouchableOpacity style={innerStyles.container}>
         <Image
-          source={require("../assets/png/frs-logo-low.png")}
+          source={require("../assets/png/apollo_splash.png")}
           style={{ width: 90, height: 90, marginBottom: 10 }}
         />
         <Text style={[styles.semibold15, { color: "#550C18" }]}>

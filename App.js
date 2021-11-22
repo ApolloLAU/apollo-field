@@ -16,6 +16,7 @@ import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import LoginScreen from "./screens/LoginScreen";
 import MainMenuScreen from "./screens/MainMenuScreen";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const Stack = createNativeStackNavigator();
 
@@ -40,6 +41,8 @@ class App extends Component {
       Raleway_EBold: Raleway_800ExtraBold,
       Raleway_Black: Raleway_900Black,
     });
+
+    // await AsyncStorage.clear();
   }
 
   render() {

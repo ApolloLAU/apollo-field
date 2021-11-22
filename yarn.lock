@@ -5669,7 +5669,7 @@ react-native-ble-plx@^2.0.2:
 
 react-native-bluetooth-classic@^1.60.0-rc.17:
   version "1.60.0-rc.17"
-  resolved "https://registry.npmjs.org/react-native-bluetooth-classic/-/react-native-bluetooth-classic-1.60.0-rc.17.tgz"
+  resolved "https://registry.yarnpkg.com/react-native-bluetooth-classic/-/react-native-bluetooth-classic-1.60.0-rc.17.tgz#f24ad59aa302e7a2649c64ba35b1fdc92b933bfe"
   integrity sha512-zyKkXqZl6vQXGa7+tkgJPiT1LSDZf8uTITgdsaN7uYGqEp4ZazYllU+CZABoVzXALgm0jO60rIxpc1Om5ssTng==
   dependencies:
     buffer "^5.4.3"
@@ -6937,7 +6937,7 @@ which@^1.2.9:
 
 with-rn-bluetooth-classic@^1.0.1:
   version "1.0.1"
-  resolved "https://registry.npmjs.org/with-rn-bluetooth-classic/-/with-rn-bluetooth-classic-1.0.1.tgz"
+  resolved "https://registry.yarnpkg.com/with-rn-bluetooth-classic/-/with-rn-bluetooth-classic-1.0.1.tgz#a3d8948972e0de987e8f20b947c99cc990554255"
   integrity sha512-Um4wm8dprTAwzdKMFx//rT+7KKp8ei316ppHe2Oqi1rmf5hpmTxLoCnzFpR1x5f3OiP+S0bhwFs4Ltubp4d5Lw==
   dependencies:
     "@expo/config-plugins" "^3.0.8"

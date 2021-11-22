@@ -1,12 +1,12 @@
 {
   "expo": {
     "name": "Apollo",
-    "slug": "apollo-field",
+    "slug": "Apollo Field",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/png/frs-logo-low.png",
+    "icon": "./assets/png/apollo_splash.png",
     "splash": {
-      "image": "./assets/png/frs-logo.png",
+      "image": "./assets/png/apollo_splash.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
@@ -15,13 +15,14 @@
     },
     "assetBundlePatterns": ["**/*"],
     "web": {
-      "favicon": "./assets/png/frs-logo.png"
+      "favicon": "./assets/png/apollo_splash.png"
     },
-    "plugins": ["@config-plugins/react-native-ble-plx"],
+    "plugins": ["with-rn-bluetooth-classic"],
     "android": {
       "permissions": [
         "android.permission.BLUETOOTH",
-        "android.permission.BLUETOOTH_ADMIN"
+        "android.permission.BLUETOOTH_ADMIN",
+        "android.permission.ACCESS_FINE_LOCATION"
       ],
       "package": "com.apollo.field"
     },

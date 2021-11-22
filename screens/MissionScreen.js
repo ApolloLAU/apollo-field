@@ -15,6 +15,17 @@ import Modal from "react-native-modal";
 import Carousel from "react-native-snap-carousel";
 import BottomModalIndexIndicator from "../components/BottomModalIndexIndicator";
 import Chip from "../components/Chip";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import RNBluetoothClassic, {
+  BluetoothDevice,
+} from "react-native-bluetooth-classic";
+import {
+  LineChart,
+  BarChart,
+  PieChart,
+  ProgressChart,
+  ContributionGraph,
+} from "react-native-chart-kit";
 
 class MissionScreen extends Component {
   constructor(props) {
@@ -25,33 +36,39 @@ class MissionScreen extends Component {
       connectedDevices: [],
       mission: {},
       activeIndex: 0,
+      reading: false,
+      ecgReading: [],
     };
-  }
-
-  async getConnectedDevice() {
-    let connectedDevices = [
-      {
-        id: "ApolloECG1",
-        name: "ECG",
-        status: "No readings yet",
-        action: "Read Data",
-      },
-      {
-        id: "ApolloECG2",
-        name: "ECG",
-        status: "No readings yet",
-        action: "Read Data",
-      },
-    ];
-    this.setState({ connectedDevices });
   }
 
   async componentDidMount() {
     let mission = await this.getMissionInformation();
-    await this.getConnectedDevice();
+    await this.getPairedDevices();
     this.setState({ mission });
 
     this.setState({ loading: false });
+  }
+
+  async getPairedDevices() {
+    let available = await RNBluetoothClassic.isBluetoothAvailable();
+    let enabled = await RNBluetoothClassic.isBluetoothEnabled();
+    if (available && enabled) {
+      let connectedDevices = await RNBluetoothClassic.getBondedDevices();
+
+      for (let device of connectedDevices) {
+        let connected = await device.isConnected();
+        let cacheDevice = await AsyncStorage.getItem(`@${device.id}`).catch();
+        if (cacheDevice) {
+          cacheDevice = JSON.parse(cacheDevice);
+          Object.assign(device, {
+            addedDate: cacheDevice.addedDate,
+            status: "No readings yet",
+            action: connected ? "Read" : "Connect",
+          });
+        }
+      }
+      this.setState({ connectedDevices });
+    }
   }
 
   async getMissionInformation() {
@@ -65,7 +82,7 @@ class MissionScreen extends Component {
       bloodType: "A+",
       height: "185cm",
       weight: "85kg",
-      allergies: "Allergty A, Allergy B",
+      allergies: "Allergy A, Allergy B",
       abnormalities: [
         {
           id: "1dAVb",
@@ -109,7 +126,7 @@ class MissionScreen extends Component {
       bloodType: "A+",
       height: "185cm",
       weight: "85kg",
-      allergies: "Allergty A, Allergy B",
+      allergies: "Allergy A, Allergy B",
       abnormalities: [
         {
           id: "1dAVb",
@@ -153,7 +170,7 @@ class MissionScreen extends Component {
       bloodType: "A+",
       height: "185cm",
       weight: "85kg",
-      allergies: "Allergty A, Allergy B",
+      allergies: "Allergy A, Allergy B",
       abnormalities: [
         {
           id: "1dAVb",
@@ -199,8 +216,41 @@ class MissionScreen extends Component {
     });
   }
 
-  deviceAction(device) {
-    console.log("Action for device", device.id);
+  async deviceAction(device) {
+    let connectedDevices = this.state.connectedDevices;
+    let ecgReading = this.state.ecgReading;
+
+    if (device.action == "Connect") {
+      try {
+        await device.connect();
+        device.action = "Read";
+        this.setState({ connectedDevices });
+      } catch (e) {
+        console.log("Failed");
+      }
+    } else {
+      if (this.state.reading == false) {
+        device.action = "Stop";
+        this.setState({ connectedDevices, reading: true });
+        await device.write("start");
+        while (this.state.reading == true) {
+          let reading = await device.read();
+          reading = parseInt(reading.substring(0, reading.length - 1));
+          if (ecgReading.length == 20) {
+            ecgReading.shift();
+          }
+          ecgReading.push(reading);
+          console.log(ecgReading);
+          this.setState({ ecgReading });
+        }
+      } else if (this.state.reading == true) {
+        device.action = "Read";
+        this.setState({ connectedDevices, reading: false });
+        console.log("Stop reading from", device.name);
+
+        await device.write("stop");
+      }
+    }
   }
 
   updateCivilianInformation() {
@@ -383,7 +433,7 @@ class MissionScreen extends Component {
     ) : (
       <SafeAreaView style={styles.container}>
         <ImageBackground
-          source={require("../assets/png/frs-logo-low.png")}
+          source={require("../assets/png/apollo_splash.png")}
           style={{
             height: "100%",
             flex: 1,
@@ -391,113 +441,162 @@ class MissionScreen extends Component {
           imageStyle={{ opacity: 0.03 }}
           resizeMode={"contain"}
         >
-          <View style={{ paddingHorizontal: 20 }}>
-            <Text
-              style={[styles.bold30, { color: "#550C18", marginBottom: 15 }]}
-            >
-              Mission {this.state.mission.id}
-            </Text>
-
-            <View style={{ marginBottom: 20 }}>
-              <Text style={[styles.semibold25, { color: "#550C18" }]}>
-                Civilians
-              </Text>
-              <Text style={[styles.medium15, { color: "#294C60" }]}>
-                {this.state.mission.civilians.map((civ) => civ.name).join(", ")}
-              </Text>
-              <Text style={[styles.semibold25, { color: "#550C18" }]}>
-                Location
-              </Text>
-              <TouchableOpacity
-                onPress={() => {
-                  this.openMaps();
-                }}
-                style={{ paddingVertical: 5 }}
-              >
-                <Text style={[styles.medium15, { color: "#294C60" }]}>
-                  {this.state.mission.location}
-                </Text>
-              </TouchableOpacity>
-              <Text style={[styles.semibold25, { color: "#550C18" }]}>
-                Initial Diagnosis
-              </Text>
-              <Text style={[styles.medium15, { color: "#294C60" }]}>
-                {this.state.mission.initialDiagnosis}
-              </Text>
-            </View>
-
-            <View
-              style={{
-                flexDirection: "row",
-                alignItems: "center",
-                marginBottom: 10,
-              }}
-            >
+          <ScrollView>
+            <View style={{ paddingHorizontal: 20, marginBottom: 30 }}>
               <Text
-                style={[styles.semibold25, { color: "#550C18", marginEnd: 10 }]}
+                style={[styles.bold30, { color: "#550C18", marginBottom: 15 }]}
               >
-                Readings
+                Mission {this.state.mission.id}
               </Text>
-              <View style={{ marginTop: 5 }}>
-                <BluetoothIcon width={20} height={20} fill="#000000" />
+
+              <View style={{ marginBottom: 20 }}>
+                <Text style={[styles.semibold25, { color: "#550C18" }]}>
+                  Civilians
+                </Text>
+                <Text style={[styles.medium15, { color: "#294C60" }]}>
+                  {this.state.mission.civilians
+                    .map((civ) => civ.name)
+                    .join(", ")}
+                </Text>
+                <Text style={[styles.semibold25, { color: "#550C18" }]}>
+                  Location
+                </Text>
+                <TouchableOpacity
+                  onPress={() => {
+                    this.openMaps();
+                  }}
+                  style={{ paddingVertical: 5 }}
+                >
+                  <Text style={[styles.medium15, { color: "#294C60" }]}>
+                    {this.state.mission.location}
+                  </Text>
+                </TouchableOpacity>
+                <Text style={[styles.semibold25, { color: "#550C18" }]}>
+                  Initial Diagnosis
+                </Text>
+                <Text style={[styles.medium15, { color: "#294C60" }]}>
+                  {this.state.mission.initialDiagnosis}
+                </Text>
+              </View>
+
+              <View
+                style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  marginBottom: 10,
+                }}
+              >
+                <Text
+                  style={[
+                    styles.semibold25,
+                    { color: "#550C18", marginEnd: 10 },
+                  ]}
+                >
+                  Readings
+                </Text>
+                <View style={{ marginTop: 5 }}>
+                  <BluetoothIcon width={20} height={20} fill="#000000" />
+                </View>
+              </View>
+              <Text style={[styles.semibold15, { color: "#550C18" }]}>
+                Connected Devices
+              </Text>
+              <View style={{ marginBottom: 5 }}>
+                {this.state.connectedDevices.map((device, deviceIndex) => (
+                  <View
+                    key={deviceIndex}
+                    style={{
+                      flexDirection: "row",
+                      alignItems: "center",
+                      // marginBottom: 10,
+                    }}
+                  >
+                    <Text
+                      style={[
+                        styles.regular_italic15,
+                        { color: "#294C60", flex: 1 },
+                      ]}
+                    >
+                      {device.name}
+                    </Text>
+                    <Text
+                      style={[styles.semibold13, { color: "#550C18", flex: 2 }]}
+                    >
+                      {device.status}
+                    </Text>
+                    <TouchableOpacity
+                      onPress={async () => await this.deviceAction(device)}
+                      style={[styles.buttonContainer, { height: 40, flex: 1 }]}
+                    >
+                      <Text style={[styles.semibold13, { color: "#FFFFFF" }]}>
+                        {device.action}
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                ))}
+              </View>
+              <View style={{ marginBottom: 20 }}>
+                {this.state.ecgReading.length != 0 && (
+                  <View style={{ width: "100%" }}>
+                    <Text style={styles.semibold20}>ECG Data</Text>
+                    <LineChart
+                      data={{
+                        labels: [],
+                        datasets: [
+                          {
+                            data: this.state.ecgReading,
+                          },
+                        ],
+                      }}
+                      width={Dimensions.get("window").width - 40}
+                      height={220}
+                      chartConfig={{
+                        backgroundColor: "#550C18",
+                        backgroundGradientFrom: "#550C18",
+                        backgroundGradientTo: "#294C60",
+                        decimalPlaces: 0,
+                        color: (opacity = 1) =>
+                          `rgba(255, 255, 255, ${opacity})`,
+                        style: {
+                          borderRadius: 10,
+                        },
+                      }}
+                      withHorizontalLabels={false}
+                      withVerticalLabels={false}
+                      withHorizontalLines={false}
+                      withVerticalLines={false}
+                      withDots={false}
+                      bezier
+                      style={{
+                        marginVertical: 8,
+                        borderRadius: 16,
+                      }}
+                    />
+                  </View>
+                )}
+              </View>
+              <Text style={[styles.semibold25, { color: "#550C18" }]}>
+                Mission Infomation
+              </Text>
+              <View style={{ flexDirection: "row", alignItems: "center" }}>
+                <Text
+                  style={[styles.semibold15, { color: "#550C18", flex: 3 }]}
+                >
+                  Civilian Information
+                </Text>
+                <TouchableOpacity
+                  onPress={() => {
+                    this.updateCivilianInformation();
+                  }}
+                  style={[styles.buttonContainer, { height: 40, flex: 1 }]}
+                >
+                  <Text style={[styles.semibold13, { color: "#FFFFFF" }]}>
+                    Update
+                  </Text>
+                </TouchableOpacity>
               </View>
             </View>
-            <Text style={[styles.semibold15, { color: "#550C18" }]}>
-              Connected Devices
-            </Text>
-            <View style={{ marginBottom: 20 }}>
-              {this.state.connectedDevices.map((device, deviceIndex) => (
-                <View
-                  key={deviceIndex}
-                  style={{
-                    flexDirection: "row",
-                    alignItems: "center",
-                    marginBottom: 10,
-                  }}
-                >
-                  <Text
-                    style={[
-                      styles.regular_italic15,
-                      { color: "#294C60", flex: 1 },
-                    ]}
-                  >
-                    {device.name}
-                  </Text>
-                  <Text
-                    style={[styles.semibold13, { color: "#550C18", flex: 2 }]}
-                  >
-                    {device.status}
-                  </Text>
-                  <TouchableOpacity
-                    onPress={() => this.deviceAction(device)}
-                    style={[styles.buttonContainer, { height: 40, flex: 1 }]}
-                  >
-                    <Text style={[styles.semibold13, { color: "#FFFFFF" }]}>
-                      {device.action}
-                    </Text>
-                  </TouchableOpacity>
-                </View>
-              ))}
-            </View>
-            <Text style={[styles.semibold25, { color: "#550C18" }]}>
-              Mission Infomation
-            </Text>
-            <View style={{ flexDirection: "row", alignItems: "center" }}>
-              <Text style={[styles.semibold15, { color: "#550C18", flex: 3 }]}>
-                Civilian Information
-              </Text>
-              <TouchableOpacity
-                onPress={() => {
-                  this.updateCivilianInformation();
-                }}
-                style={[styles.buttonContainer, { height: 40, flex: 1 }]}
-              >
-                <Text style={[styles.semibold13, { color: "#FFFFFF" }]}>
-                  Update
-                </Text>
-              </TouchableOpacity>
-            </View>
-          </View>
+          </ScrollView>
         </ImageBackground>
         <Modal
           isVisible={this.state.civilianInformationModalOpen}

@@ -28,6 +28,16 @@ export default styles = {
     margin: 0,
     marginTop: "auto",
   },
+  bottomModalContainerFull: {
+    backgroundColor: "#FFFFFF",
+    width: "90%",
+    paddingHorizontal: 20,
+    paddingTop: 15,
+    paddingBottom: 30,
+    borderRadius: 10,
+    alignSelf: "center",
+    justifyContent: "center",
+  },
   sideModalContainer: {
     backgroundColor: "#FFFFFF",
     width: "60%",
