@@ -12,6 +12,7 @@ import {
 import styles from "../utils/Styles";
 import BluetoothIcon from "../assets/svg/bluetooth.svg";
 import Modal from "react-native-modal";
+import { API, Mission, MWorker } from "../api/API";
 import Carousel from "react-native-snap-carousel";
 import BottomModalIndexIndicator from "../components/BottomModalIndexIndicator";
 import Chip from "../components/Chip";
@@ -34,8 +35,10 @@ class MissionScreen extends Component {
       loading: true,
       civilianInformationModalOpen: false,
       connectedDevices: [],
-      mission: {},
+      mission: null,
+      patients: [],
       activeIndex: 0,
+      missionSubscription: undefined,
       reading: false,
       ecgReading: [],
     };
@@ -47,6 +50,14 @@ class MissionScreen extends Component {
     this.setState({ mission });
 
     this.setState({ loading: false });
+  }
+
+  async componentWillUnmount() {
+    super.componentWillUnmount();
+    if (this.state.missionSubscription) {
+      await this.state.missionSubscription.unsubscribe();
+      this.setState({ missionSubscription: undefined });
+    }
   }
 
   async getPairedDevices() {
@@ -72,147 +83,75 @@ class MissionScreen extends Component {
   }
 
   async getMissionInformation() {
-    let civilian1 = {
-      id: 1,
-      name: "John Doe",
-      sex: "Man",
-      dob: "1/1/1970",
-      address: "Address",
-      emergencyContact: "+961 1 234 567",
-      bloodType: "A+",
-      height: "185cm",
-      weight: "85kg",
-      allergies: "Allergy A, Allergy B",
-      abnormalities: [
-        {
-          id: "1dAVb",
-          name: "1st Degree AV Block",
-          status: false,
-        },
-        {
-          id: "RBBB",
-          name: "Right Bundle Branch Block",
-          status: false,
-        },
-        {
-          id: "LBBB",
-          name: "Left Bundle Branch Block",
-          status: false,
-        },
-        {
-          id: "SB",
-          name: "Sinus Bradycardia",
-          status: false,
-        },
-        {
-          id: "AF",
-          name: "Atrial Fibrillation",
-          status: false,
-        },
-        {
-          id: "ST",
-          name: "Sinus Tachycardia",
-          status: false,
-        },
-      ],
-    };
-    let civilian2 = {
-      id: 1,
-      name: "Jane Doe",
-      sex: "Woman",
-      dob: "1/1/1970",
-      address: "Address",
-      emergencyContact: "+961 1 234 567",
-      bloodType: "A+",
-      height: "185cm",
-      weight: "85kg",
-      allergies: "Allergy A, Allergy B",
-      abnormalities: [
-        {
-          id: "1dAVb",
-          name: "1st Degree AV Block",
-          status: false,
-        },
-        {
-          id: "RBBB",
-          name: "Right Bundle Branch Block",
-          status: false,
-        },
-        {
-          id: "LBBB",
-          name: "Left Bundle Branch Block",
-          status: false,
-        },
-        {
-          id: "SB",
-          name: "Sinus Bradycardia",
-          status: false,
-        },
-        {
-          id: "AF",
-          name: "Atrial Fibrillation",
-          status: false,
-        },
-        {
-          id: "ST",
-          name: "Sinus Tachycardia",
-          status: false,
-        },
-      ],
-    };
-    let civilian3 = {
-      id: 1,
-      name: "John Doe",
-      sex: "Non-Binary",
-      dob: "1/1/1970",
-      address: "Address",
-      emergencyContact: "+961 1 234 567",
-      bloodType: "A+",
-      height: "185cm",
-      weight: "85kg",
-      allergies: "Allergy A, Allergy B",
-      abnormalities: [
-        {
-          id: "1dAVb",
-          name: "1st Degree AV Block",
-          status: false,
-        },
-        {
-          id: "RBBB",
-          name: "Right Bundle Branch Block",
-          status: false,
-        },
-        {
-          id: "LBBB",
-          name: "Left Bundle Branch Block",
-          status: false,
-        },
-        {
-          id: "SB",
-          name: "Sinus Bradycardia",
-          status: false,
-        },
-        {
-          id: "AF",
-          name: "Atrial Fibrillation",
-          status: false,
-        },
-        {
-          id: "ST",
-          name: "Sinus Tachycardia",
-          status: false,
-        },
-      ],
-    };
-    let mission = {
-      id: "00432",
-      civilians: [civilian1, civilian2, civilian3],
-      location: "Location of Civilian - Street - District",
-      initialDiagnosis: "Stroke - Faint Pulse",
-    };
+    const currentUser = await API.getLoggedInUser();
+    if (currentUser) {
+      return API.getWorkerForUser(currentUser)
+        .then(async (worker) => {
+          if (worker) {
+            let q = Mission.getWorkerActiveMissionQuery(worker);
+            let currentMission = await Mission.getWorkerActiveMission(worker);
 
-    return new Promise((resolve) => {
-      resolve(mission);
+            if (!this.state.missionSubscription) {
+              let subscription = await q.subscribe();
+              subscription.on("create", async (new_mission) => {
+                if (this.state.mission === null) {
+                  this.setState({ loading: true });
+                  await this.fetchCurrentMission(new_mission);
+                }
+              });
+
+              subscription.on("enter", async (new_mission) => {
+                console.log("current status", this.state.mission);
+                if (this.state.mission === null) {
+                  this.setState({ loading: true });
+                  await this.fetchCurrentMission(new_mission);
+                }
+              });
+
+              subscription.on("leave", async (old_mission) => {
+                if (old_mission.getStatus() === "complete") {
+                  // mission finished
+                  this.setState({ mission: null, patients: [] });
+                }
+              });
+
+              this.setState({ missionSubscription: subscription });
+            }
+
+            if (currentMission !== null) {
+              // we have one now!! set it
+              return currentMission;
+            } else {
+              // currently no mission.
+              this.setState({ loading: false });
+              return null;
+            }
+            // return Mission.getWorkerActiveMission(worker)
+          } else {
+            throw new Error("Worker does not exist");
+          }
+        })
+        .then((mission) => {
+          if (mission !== null) return this.fetchCurrentMission(mission);
+          else return null;
+        });
+    }
+
+    // this should never happen.
+    return new Promise((resolve, reject) => {
+      reject();
+    });
+  }
+
+  async fetchCurrentMission(mission) {
+    return mission.fetch().then(async (cMission) => {
+      await Promise.all(cMission.getPatients().map((w) => w.fetch()));
+      this.setState({
+        mission: cMission,
+        patients: cMission.getPatients(),
+        loading: false,
+      });
+      return cMission;
     });
   }
 
@@ -235,12 +174,12 @@ class MissionScreen extends Component {
         await device.write("start");
         while (this.state.reading == true) {
           let reading = await device.read();
-          reading =
-            reading && parseInt(reading.substring(0, reading.length - 1));
+          reading = parseInt(reading.substring(0, reading.length - 1));
           if (ecgReading.length == 20) {
             ecgReading.shift();
           }
           ecgReading.push(reading);
+          console.log(ecgReading);
           this.setState({ ecgReading });
         }
       } else if (this.state.reading == true) {
@@ -284,10 +223,15 @@ class MissionScreen extends Component {
             justifyContent: "space-between",
           }}
         >
-          <Text style={civilianTitleStyle}>{item.name}</Text>
+          <Text style={civilianTitleStyle}>{item.getFormattedName()}</Text>
           <TouchableOpacity
             onPress={() => {
-              this.setState({ mission, civilianInformationModalOpen: false });
+              item.save().then((t) =>
+                this.setState({
+                  mission,
+                  civilianInformationModalOpen: false,
+                })
+              );
             }}
           >
             <Text style={civilianTitleStyle}>Save</Text>
@@ -296,9 +240,9 @@ class MissionScreen extends Component {
         <Text style={titleStyle}>Full Name</Text>
         <TextInput
           style={textInputStyle}
-          defaultValue={item.name}
+          defaultValue={item.getFormattedName()}
           onChangeText={(name) => {
-            item.name = name;
+            item.setFirstName(name); // todo: backend has separate first and last name fields. needs fixing
           }}
         />
         <Text style={titleStyle}>Sex</Text>
@@ -312,31 +256,31 @@ class MissionScreen extends Component {
           }}
         >
           <Chip
-            pressed={item.sex == "Man"}
+            pressed={item.getSex() === "Man"}
             style={{ width: "30%", margin: 5 }}
             chipText="Man"
             onPress={() => {
-              item.sex = "Man";
+              item.setSex("Man");
               let mission = this.state.mission;
               this.setState({ mission });
             }}
           />
           <Chip
-            pressed={item.sex == "Woman"}
+            pressed={item.getSex() === "Woman"}
             style={{ width: "30%", margin: 5 }}
             chipText="Woman"
             onPress={() => {
-              item.sex = "Woman";
+              item.setSex("Woman");
               let mission = this.state.mission;
               this.setState({ mission });
             }}
           />
           <Chip
-            pressed={item.sex == "Non-Binary"}
+            pressed={item.getSex() === "Non-Binary"}
             style={{ width: "30%", margin: 5 }}
             chipText="Non-Binary"
             onPress={() => {
-              item.sex = "Non-Binary";
+              item.setSex("Non-Binary");
               let mission = this.state.mission;
               this.setState({ mission });
             }}
@@ -345,57 +289,65 @@ class MissionScreen extends Component {
         <Text style={titleStyle}>Date Of Birth</Text>
         <TextInput
           style={textInputStyle}
-          defaultValue={item.dob}
+          defaultValue={item.getDOB().toLocaleDateString()}
           onChangeText={(dob) => {
-            item.dob = dob;
+            item.setDOB(new Date(dob)); // todo: make sure dob is in a correct format
           }}
         />
         <Text style={titleStyle}>Address</Text>
         <TextInput
           style={textInputStyle}
-          defaultValue={item.address}
+          defaultValue={item.getHomeAddress()}
           onChangeText={(address) => {
-            item.address = address;
+            item.setHomeAddress(address);
+          }}
+        />
+        <Text style={titleStyle}>Phone Number</Text>
+        <TextInput
+          style={textInputStyle}
+          defaultValue={item.getCellNbr()}
+          onChangeText={(cellNbr) => {
+            item.setCellNbr(cellNbr);
           }}
         />
         <Text style={titleStyle}>Emergency Contact</Text>
         <TextInput
           style={textInputStyle}
-          defaultValue={item.emergencyContact}
+          defaultValue={item.getEmergencyNbr()}
           onChangeText={(emergencyContact) => {
-            item.emergencyContact = emergencyContact;
+            item.setEmergencyNbr(emergencyContact);
           }}
         />
         <Text style={titleStyle}>Blood Type</Text>
         <TextInput
           style={textInputStyle}
-          defaultValue={item.bloodType}
+          defaultValue={item.getBloodType()}
           onChangeText={(bloodType) => {
-            item.bloodType = bloodType;
+            item.setBloodType(bloodType);
           }}
         />
         <Text style={titleStyle}>Height</Text>
         <TextInput
           style={textInputStyle}
-          defaultValue={item.height}
+          defaultValue={item.getHeight().toString()}
           onChangeText={(height) => {
-            item.height = height;
+            item.setHeight(parseFloat(height));
           }}
         />
         <Text style={titleStyle}>Weight</Text>
         <TextInput
           style={textInputStyle}
-          defaultValue={item.weight}
+          defaultValue={item.getWeight().toString()}
           onChangeText={(weight) => {
-            item.weight = weight;
+            item.setWeight(parseFloat(weight));
           }}
         />
         <Text style={titleStyle}>Allergies</Text>
         <TextInput
           style={textInputStyle}
-          defaultValue={item.allergies}
+          defaultValue={item.getAllergies()}
           onChangeText={(allergies) => {
-            item.allergies = allergies;
+            item.setAllergies(allergies);
           }}
         />
         <Text style={titleStyle}>Chronic Illnesses</Text>
@@ -407,7 +359,7 @@ class MissionScreen extends Component {
             marginBottom: 10,
           }}
         >
-          {item.abnormalities.map((abn, abnIndex) => (
+          {item.getAbnormalities().map((abn, abnIndex) => (
             <Chip
               key={abnIndex}
               pressed={abn.status}
@@ -425,223 +377,248 @@ class MissionScreen extends Component {
     );
   };
 
+  // todo: idk if this is possible, but when only one patient, carousel shouldn't show the single dot cuz it doesn't make sense.
+  // todo: previous heart conditions should now be a single checkbox
+  //  DOB should be date selector, or at least make sure date is formatted correctly
+  //  blood type can be dropdown
+  //  height/weight should be a number
+  //  also clicking save currently only uploads athe CURRENT patient to the backend. we need to call .save() (which is async btw) on all patients.
   render() {
-    return this.state.loading ? (
-      <View style={styles.container}>
-        <Text>Loading...</Text>
-      </View>
-    ) : (
-      <SafeAreaView style={styles.container}>
-        <ImageBackground
-          source={require("../assets/png/apollo_splash.png")}
-          style={{
-            height: "100%",
-            flex: 1,
-          }}
-          imageStyle={{ opacity: 0.03 }}
-          resizeMode={"contain"}
-        >
-          <ScrollView>
-            <View style={{ paddingHorizontal: 20, marginBottom: 30 }}>
-              <Text
-                style={[styles.bold30, { color: "#550C18", marginBottom: 15 }]}
-              >
-                Mission {this.state.mission.id}
-              </Text>
-
-              <View style={{ marginBottom: 20 }}>
-                <Text style={[styles.semibold25, { color: "#550C18" }]}>
-                  Civilians
-                </Text>
-                <Text style={[styles.medium15, { color: "#294C60" }]}>
-                  {this.state.mission.civilians
-                    .map((civ) => civ.name)
-                    .join(", ")}
-                </Text>
-                <Text style={[styles.semibold25, { color: "#550C18" }]}>
-                  Location
-                </Text>
-                <TouchableOpacity
-                  onPress={() => {
-                    this.openMaps();
-                  }}
-                  style={{ paddingVertical: 5 }}
-                >
-                  <Text style={[styles.medium15, { color: "#294C60" }]}>
-                    {this.state.mission.location}
-                  </Text>
-                </TouchableOpacity>
-                <Text style={[styles.semibold25, { color: "#550C18" }]}>
-                  Initial Diagnosis
-                </Text>
-                <Text style={[styles.medium15, { color: "#294C60" }]}>
-                  {this.state.mission.initialDiagnosis}
-                </Text>
-              </View>
-
-              <View
-                style={{
-                  flexDirection: "row",
-                  alignItems: "center",
-                  marginBottom: 10,
-                }}
-              >
+    if (this.state.loading) {
+      return (
+        <View style={styles.container}>
+          <Text>Loading...</Text>
+        </View>
+      );
+    } else if (this.state.mission === null) {
+      // todo: make this pretty
+      return (
+        <View style={styles.container}>
+          <Text>No mission available...</Text>
+        </View>
+      );
+    } else {
+      // todo: depending on location and initial diagnosis text size, the entire screen may not fit and will need to be scrollable
+      return (
+        <SafeAreaView style={styles.container}>
+          <ImageBackground
+            source={require("../assets/png/frs-logo-low.png")}
+            style={{
+              height: "100%",
+              flex: 1,
+            }}
+            imageStyle={{ opacity: 0.03 }}
+            resizeMode={"contain"}
+          >
+            <ScrollView>
+              <View style={{ paddingHorizontal: 20, marginBottom: 30 }}>
                 <Text
                   style={[
-                    styles.semibold25,
-                    { color: "#550C18", marginEnd: 10 },
+                    styles.bold30,
+                    { color: "#550C18", marginBottom: 15 },
                   ]}
                 >
-                  Readings
+                  Mission {this.state.mission.id}
                 </Text>
-                <View style={{ marginTop: 5 }}>
-                  <BluetoothIcon width={20} height={20} fill="#000000" />
+
+                <View style={{ marginBottom: 20 }}>
+                  <Text style={[styles.semibold25, { color: "#550C18" }]}>
+                    Civilians
+                  </Text>
+                  <Text style={[styles.medium15, { color: "#294C60" }]}>
+                    {this.state.mission.formatPatientNames()}
+                  </Text>
+                  <Text style={[styles.semibold25, { color: "#550C18" }]}>
+                    Location
+                  </Text>
+                  <TouchableOpacity
+                    onPress={() => {
+                      this.openMaps();
+                    }}
+                    style={{ paddingVertical: 5 }}
+                  >
+                    <Text style={[styles.medium15, { color: "#294C60" }]}>
+                      {this.state.mission.getFormattedLocation()}
+                    </Text>
+                  </TouchableOpacity>
+                  <Text style={[styles.semibold25, { color: "#550C18" }]}>
+                    Initial Diagnosis
+                  </Text>
+                  <Text style={[styles.medium15, { color: "#294C60" }]}>
+                    {this.state.mission.getInitialDesc()}
+                  </Text>
+                </View>
+
+                <View
+                  style={{
+                    flexDirection: "row",
+                    alignItems: "center",
+                    marginBottom: 10,
+                  }}
+                >
+                  <Text
+                    style={[
+                      styles.semibold25,
+                      { color: "#550C18", marginEnd: 10 },
+                    ]}
+                  >
+                    Readings
+                  </Text>
+                  <View style={{ marginTop: 5 }}>
+                    <BluetoothIcon width={20} height={20} fill="#000000" />
+                  </View>
+                </View>
+                <Text style={[styles.semibold15, { color: "#550C18" }]}>
+                  Connected Devices
+                </Text>
+                <View style={{ marginBottom: 5 }}>
+                  {this.state.connectedDevices.map((device, deviceIndex) => (
+                    <View
+                      key={deviceIndex}
+                      style={{
+                        flexDirection: "row",
+                        alignItems: "center",
+                        // marginBottom: 10,
+                      }}
+                    >
+                      <Text
+                        style={[
+                          styles.regular_italic15,
+                          { color: "#294C60", flex: 1 },
+                        ]}
+                      >
+                        {device.name}
+                      </Text>
+                      <Text
+                        style={[
+                          styles.semibold13,
+                          { color: "#550C18", flex: 2 },
+                        ]}
+                      >
+                        {device.status}
+                      </Text>
+                      <TouchableOpacity
+                        onPress={async () => await this.deviceAction(device)}
+                        style={[
+                          styles.buttonContainer,
+                          { height: 40, flex: 1 },
+                        ]}
+                      >
+                        <Text style={[styles.semibold13, { color: "#FFFFFF" }]}>
+                          {device.action}
+                        </Text>
+                      </TouchableOpacity>
+                    </View>
+                  ))}
+                </View>
+                <View style={{ marginBottom: 20 }}>
+                  {this.state.ecgReading.length != 0 && (
+                    <View style={{ width: "100%" }}>
+                      <Text style={styles.semibold20}>ECG Data</Text>
+                      <LineChart
+                        data={{
+                          labels: [],
+                          datasets: [
+                            {
+                              data: this.state.ecgReading,
+                            },
+                          ],
+                        }}
+                        width={Dimensions.get("window").width - 40}
+                        height={220}
+                        chartConfig={{
+                          backgroundColor: "#550C18",
+                          backgroundGradientFrom: "#550C18",
+                          backgroundGradientTo: "#294C60",
+                          decimalPlaces: 0,
+                          color: (opacity = 1) =>
+                            `rgba(255, 255, 255, ${opacity})`,
+                          style: {
+                            borderRadius: 10,
+                          },
+                        }}
+                        withHorizontalLabels={false}
+                        withVerticalLabels={false}
+                        withHorizontalLines={false}
+                        withVerticalLines={false}
+                        withDots={false}
+                        bezier
+                        style={{
+                          marginVertical: 8,
+                          borderRadius: 16,
+                        }}
+                      />
+                    </View>
+                  )}
+                </View>
+                <Text style={[styles.semibold25, { color: "#550C18" }]}>
+                  Mission Infomation
+                </Text>
+                <View style={{ flexDirection: "row", alignItems: "center" }}>
+                  <Text
+                    style={[styles.semibold15, { color: "#550C18", flex: 3 }]}
+                  >
+                    Civilian Information
+                  </Text>
+                  <TouchableOpacity
+                    onPress={() => {
+                      this.updateCivilianInformation();
+                    }}
+                    style={[styles.buttonContainer, { height: 40, flex: 1 }]}
+                  >
+                    <Text style={[styles.semibold13, { color: "#FFFFFF" }]}>
+                      Update
+                    </Text>
+                  </TouchableOpacity>
                 </View>
               </View>
-              <Text style={[styles.semibold15, { color: "#550C18" }]}>
-                Connected Devices
-              </Text>
-              <View style={{ marginBottom: 5 }}>
-                {this.state.connectedDevices.map((device, deviceIndex) => (
-                  <View
-                    key={deviceIndex}
-                    style={{
-                      flexDirection: "row",
-                      alignItems: "center",
-                      // marginBottom: 10,
-                    }}
-                  >
-                    <Text
-                      style={[
-                        styles.regular_italic15,
-                        { color: "#294C60", flex: 1 },
-                      ]}
-                    >
-                      {device.name}
-                    </Text>
-                    <Text
-                      style={[styles.semibold13, { color: "#550C18", flex: 2 }]}
-                    >
-                      {device.status}
-                    </Text>
-                    <TouchableOpacity
-                      onPress={async () => await this.deviceAction(device)}
-                      style={[styles.buttonContainer, { height: 40, flex: 1 }]}
-                    >
-                      <Text style={[styles.semibold13, { color: "#FFFFFF" }]}>
-                        {device.action}
-                      </Text>
-                    </TouchableOpacity>
-                  </View>
-                ))}
+            </ScrollView>
+          </ImageBackground>
+          <Modal
+            isVisible={this.state.civilianInformationModalOpen}
+            avoidKeyboard
+            scrollHorizontal
+            propagateSwipe
+            useNativeDriver
+            onSwipeThreshold={200}
+            onSwipeComplete={() =>
+              this.setState({ civilianInformationModalOpen: false })
+            }
+            onBackdropPress={() =>
+              this.setState({ civilianInformationModalOpen: false })
+            }
+            style={{ margin: 0 }}
+          >
+            <View style={[styles.bottomModalContainer, { height: "75%" }]}>
+              <View
+                style={{
+                  width: "100%",
+                  justifyContent: "center",
+                  alignItems: "center",
+                }}
+              >
+                <BottomModalIndexIndicator
+                  total={this.state.patients.length}
+                  current={this.state.activeIndex}
+                />
               </View>
-              <View style={{ marginBottom: 20 }}>
-                {this.state.ecgReading.length != 0 && (
-                  <View style={{ width: "100%" }}>
-                    <Text style={styles.semibold20}>ECG Data</Text>
-                    <LineChart
-                      data={{
-                        labels: [],
-                        datasets: [
-                          {
-                            data: this.state.ecgReading,
-                          },
-                        ],
-                      }}
-                      width={Dimensions.get("window").width - 40}
-                      height={220}
-                      chartConfig={{
-                        backgroundColor: "#550C18",
-                        backgroundGradientFrom: "#550C18",
-                        backgroundGradientTo: "#294C60",
-                        decimalPlaces: 0,
-                        color: (opacity = 1) =>
-                          `rgba(255, 255, 255, ${opacity})`,
-                        style: {
-                          borderRadius: 10,
-                        },
-                      }}
-                      withHorizontalLabels={false}
-                      withVerticalLabels={false}
-                      withHorizontalLines={false}
-                      withVerticalLines={false}
-                      withDots={false}
-                      bezier
-                      style={{
-                        marginVertical: 8,
-                        borderRadius: 16,
-                      }}
-                    />
-                  </View>
-                )}
-              </View>
-              <Text style={[styles.semibold25, { color: "#550C18" }]}>
-                Mission Infomation
-              </Text>
-              <View style={{ flexDirection: "row", alignItems: "center" }}>
-                <Text
-                  style={[styles.semibold15, { color: "#550C18", flex: 3 }]}
-                >
-                  Civilian Information
-                </Text>
-                <TouchableOpacity
-                  onPress={() => {
-                    this.updateCivilianInformation();
-                  }}
-                  style={[styles.buttonContainer, { height: 40, flex: 1 }]}
-                >
-                  <Text style={[styles.semibold13, { color: "#FFFFFF" }]}>
-                    Update
-                  </Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-          </ScrollView>
-        </ImageBackground>
-        <Modal
-          isVisible={this.state.civilianInformationModalOpen}
-          avoidKeyboard
-          scrollHorizontal
-          propagateSwipe
-          useNativeDriver
-          onSwipeThreshold={200}
-          onSwipeComplete={() =>
-            this.setState({ civilianInformationModalOpen: false })
-          }
-          onBackdropPress={() =>
-            this.setState({ civilianInformationModalOpen: false })
-          }
-          style={{ margin: 0 }}
-        >
-          <View style={[styles.bottomModalContainer, { height: "75%" }]}>
-            <View
-              style={{
-                width: "100%",
-                justifyContent: "center",
-                alignItems: "center",
-              }}
-            >
-              <BottomModalIndexIndicator
-                total={this.state.mission.civilians.length}
-                current={this.state.activeIndex}
+              <Carousel
+                ref={(c) => {
+                  this._carousel = c;
+                }}
+                loop
+                data={this.state.patients}
+                firstItem={this.state.activeIndex}
+                renderItem={this.renderCivilianInformation}
+                sliderWidth={Dimensions.get("window").width}
+                itemWidth={Dimensions.get("window").width}
+                onSnapToItem={(activeIndex) => this.setState({ activeIndex })}
               />
             </View>
-            <Carousel
-              ref={(c) => {
-                this._carousel = c;
-              }}
-              loop
-              data={this.state.mission.civilians}
-              firstItem={this.state.activeIndex}
-              renderItem={this.renderCivilianInformation}
-              sliderWidth={Dimensions.get("window").width}
-              itemWidth={Dimensions.get("window").width}
-              onSnapToItem={(activeIndex) => this.setState({ activeIndex })}
-            />
-          </View>
-        </Modal>
-      </SafeAreaView>
-    );
+          </Modal>
+        </SafeAreaView>
+      );
+    }
   }
 }
 

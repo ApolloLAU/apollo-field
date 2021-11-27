@@ -3,24 +3,61 @@ import { View, Text, TextInput, TouchableOpacity } from "react-native";
 import UserIcon from "../assets/svg/user.svg";
 import PasswordIcon from "../assets/svg/padlock.svg";
 import styles from "../utils/Styles";
+import {API, Mission} from "../api/API";
 
 class LoginScreen extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      email: "",
-      password: "",
+      email: "petersakr.field",
+      password: "test123",
     };
   }
 
-  /*
-  TODO: LOGIN FUNCTION
-  */
+  async componentDidMount() {
+    const user = await API.getLoggedInUser();
+    if (user) {
+      try {
+        const worker = await API.getWorkerForUser(user);
+        if (worker) {
+          const m = await Mission.getWorkerActiveMission(worker)
+          if (!m) {
+            worker.setStatus("online");
+          }
+          await worker.save();
+          console.log('worker already logged in. skipping login screen!')
+          this.props.navigation.navigate("MainMenuScreen");
+        }
+      } catch (e) {
+
+      }
+    }
+  }
+
+
   async login() {
     let email = this.state.email;
     let password = this.state.password;
 
-    this.props.navigation.navigate("MainMenuScreen");
+    API.login(email, password).then((user) => {
+      console.log('user logged in!')
+      if (user !== undefined) {
+        return API.getWorkerForUser(user);
+      }
+    }).then(async (worker) => {
+      console.log('got worker for user')
+      if (worker.getRole() === 'field_worker') {
+        const m = await Mission.getWorkerActiveMission(worker)
+        if (!m) {
+          worker.setStatus("online");
+        }
+        await worker.save();
+        console.log('login complete. navigating...')
+        this.props.navigation.navigate("MainMenuScreen");
+      }
+    }).catch((e) => {
+      console.log(e);
+    })
   }
 
   render() {
@@ -43,6 +80,7 @@ class LoginScreen extends Component {
                 Email
               </Text>
               <TextInput
+                  value={this.state.email}
                 style={[styles.textInput]}
                 onChangeText={(email) => {
                   this.setState({ email });
@@ -61,6 +99,7 @@ class LoginScreen extends Component {
                 Password
               </Text>
               <TextInput
+                  value={this.state.password}
                 style={[styles.textInput]}
                 secureTextEntry={true}
                 onChangeText={(password) => {

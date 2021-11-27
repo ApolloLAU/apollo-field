@@ -10,6 +10,7 @@
     "@config-plugins/react-native-ble-plx": "0.0.1",
     "@eliav2/react-native-collapsible-view": "^1.4.0",
     "@expo-google-fonts/raleway": "^0.2.0",
+    "@parse/react-native": "^0.0.1-alpha.16",
     "@react-native-async-storage/async-storage": "^1.15.8",
     "@react-native-community/datetimepicker": "^3.5.2",
     "@react-navigation/bottom-tabs": "^6.0.9",
@@ -23,6 +24,7 @@
     "expo-splash-screen": "~0.11.2",
     "expo-status-bar": "~1.0.4",
     "expo-updates": "~0.8.1",
+    "parse": "^3.4.0",
     "react": "16.13.1",
     "react-dom": "16.13.1",
     "react-native": "~0.63.4",
@@ -47,7 +49,10 @@
   },
   "devDependencies": {
     "@babel/core": "^7.9.0",
-    "patch-package": "^6.4.7"
+    "@types/react": "~16.9.35",
+    "@types/react-native": "~0.63.2",
+    "patch-package": "^6.4.7",
+    "typescript": "~4.0.0"
   },
   "private": true,
   "name": "apollo-field",
