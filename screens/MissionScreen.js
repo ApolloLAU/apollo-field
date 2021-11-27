@@ -12,7 +12,7 @@ import {
 import styles from "../utils/Styles";
 import BluetoothIcon from "../assets/svg/bluetooth.svg";
 import Modal from "react-native-modal";
-import { API, Mission, MWorker } from "../api/API";
+import { API, Mission, MWorker, SensorData } from "../api/API";
 import Carousel from "react-native-snap-carousel";
 import BottomModalIndexIndicator from "../components/BottomModalIndexIndicator";
 import Chip from "../components/Chip";
@@ -41,6 +41,7 @@ class MissionScreen extends Component {
       missionSubscription: undefined,
       reading: false,
       ecgReading: [],
+      sensorData: {},
     };
   }
 
@@ -169,6 +170,8 @@ class MissionScreen extends Component {
       }
     } else {
       if (this.state.reading == false) {
+        let sensorData = new SensorData();
+        this.setState({ sensorData });
         device.action = "Stop";
         this.setState({ connectedDevices, reading: true });
         await device.write("start");
@@ -176,10 +179,13 @@ class MissionScreen extends Component {
           let reading = await device.read();
           reading =
             reading && parseInt(reading.substring(0, reading.length - 1));
-          if (ecgReading.length == 50) {
-            ecgReading.shift();
+          reading && ecgReading.push(reading);
+          if (ecgReading.length == 10) {
+            sensorData.addRawECGValues(ecgReading);
+            await sensorData.save();
+            // ecgReading.shift();
+            ecgReading = [];
           }
-          ecgReading.push(reading);
           this.setState({ ecgReading });
         }
       } else if (this.state.reading == true) {
@@ -544,8 +550,8 @@ class MissionScreen extends Component {
                         withDots={false}
                         bezier
                         style={{
-                          marginVertical: 8,
-                          borderRadius: 16,
+                          paddingRight: 0,
+                          borderRadius: 10,
                         }}
                       />
                     </View>
