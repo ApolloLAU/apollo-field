@@ -612,4 +612,4 @@ class API {
   }
 }
 
-export { API, MWorker, Mission, ChatMessage, MedicalDataPt, District, Patient };
+export { API, MWorker, Mission, ChatMessage, MedicalDataPt, District, Patient, SensorData };
