@@ -217,6 +217,39 @@ class MedicalDataPt extends Parse.Object {
   // }
 }
 
+class SensorData extends Parse.Object {
+  constructor() {
+    super('SensorData');
+    this.set('ECG', []);
+    this.set('clean_index', -1);
+    this.set('predicted_diseases', []);
+    this.set('rpeaks', []);
+    this.set('ybeats', []);
+    this.set('bpm', []);
+  }
+
+  addRawECGValues(values: number[]) {
+    const currentVals = this.get('ECG')
+    currentVals.push(...values)
+    this.set('ECG', currentVals);
+  }
+
+  getCleanECGVals() {
+    if (this.get('clean_index') <= 0)
+      return [];
+
+    const all_vals = this.get('ECG');
+    return all_vals.slice(0, this.get('clean_index')+1);
+  }
+
+  getCurrentBPM() {
+    if (this.get('bpm').length > 0)
+      return this.get('bpm').at(-1);
+    return 0;
+  }
+
+}
+
 class ChatMessage extends Parse.Object {
   createdAt: any;
 
@@ -548,6 +581,7 @@ class API {
     Parse.Object.registerSubclass('MedicalData', MedicalDataPt);
     Parse.Object.registerSubclass('District', District);
     Parse.Object.registerSubclass('Patient', Patient);
+    Parse.Object.registerSubclass('SensorData', SensorData)
     console.log('API Initialized');
   }
 
