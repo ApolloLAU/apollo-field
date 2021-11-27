@@ -22,6 +22,7 @@ import RNBluetoothClassic, {
   BluetoothDevice,
 } from "react-native-bluetooth-classic";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import LoadingComponent from "../components/LoadingComponent";
 
 class ProfileScreen extends Component {
   constructor(props) {
@@ -122,30 +123,8 @@ class ProfileScreen extends Component {
     this.setState({ connectedDevices, scanningModalOpen: false });
   }
   async getCurrentWorker() {
-    // let worker = {
-    //   fullName: "Joe Smith",
-    //   profilePicture: require("../assets/png/frs-logo-low.png"),
-    //   district: "Beirut District D003",
-    //   status: "online",
-    //   statusColor: "",
-    //   completedMissions: [
-    //     {
-    //       name: "Mission 1",
-    //       location: "Location 1",
-    //     },
-    //     {
-    //       name: "Mission 2",
-    //       location: "Location 2",
-    //     },
-    //     {
-    //       name: "Mission 3",
-    //       location: "Location 3",
-    //     },
-    //   ],
-    // };
     let user = await API.getLoggedInUser();
     let worker = await API.getWorkerForUser(user);
-    // console.log('worker', worker)
 
     switch (worker.getStatus()) {
       case "online":
@@ -166,7 +145,7 @@ class ProfileScreen extends Component {
 
   render() {
     return this.state.loading ? (
-      <View></View>
+      <LoadingComponent />
     ) : (
       <SafeAreaView style={styles.container}>
         <View>

@@ -1,8 +1,9 @@
-import React, {Component} from "react";
-import {SafeAreaView, Text} from "react-native";
+import React, { Component } from "react";
+import { SafeAreaView, Text } from "react-native";
 import styles from "../utils/Styles";
-import {GiftedChat} from "react-native-gifted-chat";
-import {API, ChatMessage, Mission} from "../api/API";
+import { GiftedChat } from "react-native-gifted-chat";
+import { API, ChatMessage, Mission } from "../api/API";
+import LoadingComponent from "../components/LoadingComponent";
 
 class ChatScreen extends Component {
   constructor(props) {
@@ -23,35 +24,54 @@ class ChatScreen extends Component {
       const subscription = await q.subscribe();
 
       const currentMessages = await q.find();
-      console.log('found messages count', currentMessages.length)
+      // console.log("found messages count", currentMessages.length);
       const neededMessages = currentMessages.map((m) => {
-        return {_id: m.id, createdAt: m.createdAt, text: m.getMessage() || "", image: m.getImage(), user: {_id: m.getSender().id === this.state.currentWorker.id ? 1 : 2}}
-      })
+        return {
+          _id: m.id,
+          createdAt: m.createdAt,
+          text: m.getMessage() || "",
+          image: m.getImage(),
+          user: {
+            _id: m.getSender().id === this.state.currentWorker.id ? 1 : 2,
+          },
+        };
+      });
 
-      const newMessages = GiftedChat.append(this.state.messages, neededMessages)
-      this.setState({messages: newMessages})
+      const newMessages = GiftedChat.append(
+        this.state.messages,
+        neededMessages
+      );
+      this.setState({ messages: newMessages });
 
-      subscription.on('create', (msg) => {
-        console.log('received message!', msg.getMessage())
+      subscription.on("create", (msg) => {
+        // console.log("received message!", msg.getMessage());
         if (msg.getSender().id !== this.state.currentWorker.id)
-          this.setState({messages: GiftedChat.append(this.state.messages, [{_id: msg.id, createdAt: msg.createdAt, text: msg.getMessage(), user: {_id: 2}}])})
-      })
+          this.setState({
+            messages: GiftedChat.append(this.state.messages, [
+              {
+                _id: msg.id,
+                createdAt: msg.createdAt,
+                text: msg.getMessage(),
+                user: { _id: 2 },
+              },
+            ]),
+          });
+      });
 
-
-      this.setState({subscription})
+      this.setState({ subscription });
     }
-    console.log('mission:', missionActive)
-    this.setState({mission: missionActive, loading: false });
+    // console.log("mission:", missionActive);
+    this.setState({ mission: missionActive, loading: false });
   }
 
   async componentWillUnmount() {
     if (this.state.chatSubscription) {
-      this.state.chatSubscription.unsubscribe()
+      this.state.chatSubscription.unsubscribe();
     }
   }
 
   onSend(newMessage) {
-    console.log('messages', newMessage);
+    // console.log("messages", newMessage);
     if (this.state.currentWorker) {
       let msg = new ChatMessage();
       msg.setMessage(newMessage[0].text);
@@ -68,15 +88,13 @@ class ChatScreen extends Component {
     let user = await API.getLoggedInUser();
     let worker = await API.getWorkerForUser(user);
 
-    this.setState({currentWorker: worker});
+    this.setState({ currentWorker: worker });
     return await Mission.getWorkerActiveMission(worker);
   }
 
   render() {
     return this.state.loading ? (
-      <SafeAreaView style={styles.container}>
-        <Text>Loading...</Text>
-      </SafeAreaView>
+      <LoadingComponent />
     ) : this.state.mission ? (
       <SafeAreaView style={styles.container}>
         <GiftedChat
@@ -89,9 +107,16 @@ class ChatScreen extends Component {
         />
       </SafeAreaView>
     ) : (
-      <SafeAreaView style={styles.container}>
-        <Text>No current mission active</Text>
-      </SafeAreaView>
+      <View
+        style={[
+          styles.container,
+          { justifyContent: "center", alignItems: "center" },
+        ]}
+      >
+        <Text style={[styles.semibold20, { color: "#550C18" }]}>
+          No current mission active
+        </Text>
+      </View>
     );
   }
 }

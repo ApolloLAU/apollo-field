@@ -17,16 +17,9 @@ import Carousel from "react-native-snap-carousel";
 import BottomModalIndexIndicator from "../components/BottomModalIndexIndicator";
 import Chip from "../components/Chip";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import RNBluetoothClassic, {
-  BluetoothDevice,
-} from "react-native-bluetooth-classic";
-import {
-  LineChart,
-  BarChart,
-  PieChart,
-  ProgressChart,
-  ContributionGraph,
-} from "react-native-chart-kit";
+import RNBluetoothClassic from "react-native-bluetooth-classic";
+import { LineChart } from "react-native-chart-kit";
+import LoadingComponent from "../components/LoadingComponent";
 
 class MissionScreen extends Component {
   constructor(props) {
@@ -180,7 +173,8 @@ class MissionScreen extends Component {
           reading =
             reading && parseInt(reading.substring(0, reading.length - 1));
           reading && ecgReading.push(reading);
-          if (ecgReading.length == 10) {
+          if (ecgReading.length == 200) {
+            console.log(ecgReading);
             sensorData.addRawECGValues(ecgReading);
             await sensorData.save();
             // ecgReading.shift();
@@ -391,16 +385,18 @@ class MissionScreen extends Component {
   //  also clicking save currently only uploads athe CURRENT patient to the backend. we need to call .save() (which is async btw) on all patients.
   render() {
     if (this.state.loading) {
-      return (
-        <View style={styles.container}>
-          <Text>Loading...</Text>
-        </View>
-      );
+      return <LoadingComponent />;
     } else if (this.state.mission === null) {
-      // todo: make this pretty
       return (
-        <View style={styles.container}>
-          <Text>No mission available...</Text>
+        <View
+          style={[
+            styles.container,
+            { justifyContent: "center", alignItems: "center" },
+          ]}
+        >
+          <Text style={[styles.semibold20, { color: "#550C18" }]}>
+            No current mission active
+          </Text>
         </View>
       );
     } else {
