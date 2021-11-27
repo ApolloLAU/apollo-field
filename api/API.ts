@@ -221,7 +221,7 @@ class SensorData extends Parse.Object {
   constructor() {
     super('SensorData');
     this.set('ECG', []);
-    this.set('clean_index', -1);
+    this.set('raw_ECG', []);
     this.set('predicted_diseases', []);
     this.set('rpeaks', []);
     this.set('ybeats', []);
@@ -229,17 +229,11 @@ class SensorData extends Parse.Object {
   }
 
   addRawECGValues(values: number[]) {
-    const currentVals = this.get('ECG')
-    currentVals.push(...values)
-    this.set('ECG', currentVals);
+    this.set('raw_ECG', values);
   }
 
   getCleanECGVals() {
-    if (this.get('clean_index') <= 0)
-      return [];
-
-    const all_vals = this.get('ECG');
-    return all_vals.slice(0, this.get('clean_index')+1);
+    return this.get('ECG');
   }
 
   getCurrentBPM() {
