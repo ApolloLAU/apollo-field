@@ -318,7 +318,7 @@ class Mission extends Parse.Object {
     return this.getWorkerActiveMissionQuery(currentWorker)
       .find()
       .then((missions: Array<Mission>) => {
-        console.log('active missions:', missions);
+        // console.log('active missions:', missions);
         if (missions.length !== 0) {
           return missions[0];
         }
@@ -392,7 +392,7 @@ class Mission extends Parse.Object {
 
   formatPatientNames() {
     const patients = this.getPatients();
-    console.log('patients:', patients);
+    // console.log('patients:', patients);
     if (patients.length === 1) {
       return patients[0].getFormattedName();
     }

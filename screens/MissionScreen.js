@@ -174,12 +174,12 @@ class MissionScreen extends Component {
         await device.write("start");
         while (this.state.reading == true) {
           let reading = await device.read();
-          reading = parseInt(reading.substring(0, reading.length - 1));
-          if (ecgReading.length == 20) {
+          reading =
+            reading && parseInt(reading.substring(0, reading.length - 1));
+          if (ecgReading.length == 50) {
             ecgReading.shift();
           }
           ecgReading.push(reading);
-          console.log(ecgReading);
           this.setState({ ecgReading });
         }
       } else if (this.state.reading == true) {

@@ -17,7 +17,7 @@ import TrashIcon from "../assets/svg/trash.svg";
 import CompletedIcon from "../assets/svg/completed.svg";
 import MissionCard from "../components/MissionCard";
 import Modal from "react-native-modal";
-import {API} from "../api/API";
+import { API } from "../api/API";
 import RNBluetoothClassic, {
   BluetoothDevice,
 } from "react-native-bluetooth-classic";
@@ -145,7 +145,7 @@ class ProfileScreen extends Component {
     // };
     let user = await API.getLoggedInUser();
     let worker = await API.getWorkerForUser(user);
-    console.log('worker', worker)
+    // console.log('worker', worker)
 
     switch (worker.getStatus()) {
       case "online":
@@ -190,7 +190,7 @@ class ProfileScreen extends Component {
               onPress={() => this.setState({ statusModalOpen: true })}
             >
               <Image
-                source={{uri: this.state.worker.getImgURL()}}
+                source={{ uri: this.state.worker.getImgURL() }}
                 style={{
                   width: 125,
                   height: 125,
