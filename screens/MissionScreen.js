@@ -12,7 +12,7 @@ import {
 import styles from "../utils/Styles";
 import BluetoothIcon from "../assets/svg/bluetooth.svg";
 import Modal from "react-native-modal";
-import { API, Mission, MWorker, SensorData } from "../api/API";
+import { API, Mission, SensorData } from "../api/API";
 import Carousel from "react-native-snap-carousel";
 import BottomModalIndexIndicator from "../components/BottomModalIndexIndicator";
 import Chip from "../components/Chip";
@@ -32,11 +32,15 @@ class MissionScreen extends Component {
       patients: [],
       activeIndex: 0,
       missionSubscription: undefined,
+      ecgSubscription: undefined,
       reading: false,
       ecgReading: [],
-      sensorData: {},
+      sensorData: undefined, //todo: make sure you check for undefined before plotting anything. Using undefined so we can tell if we have data or not.
     };
   }
+
+  // todo: the data points you need to plot are available at this.state.sensorData.getCleanECGVals() (no x-values, just y values)
+
 
   async componentDidMount() {
     let mission = await this.getMissionInformation();
@@ -112,6 +116,10 @@ class MissionScreen extends Component {
               this.setState({ missionSubscription: subscription });
             }
 
+            if (!this.state.ecgSubscription) {
+
+            }
+
             if (currentMission !== null) {
               // we have one now!! set it
               return currentMission;
@@ -139,21 +147,75 @@ class MissionScreen extends Component {
 
   async fetchCurrentMission(mission) {
     return mission.fetch().then(async (cMission) => {
-      await Promise.all(cMission.getPatients().map((w) => w.fetch()));
-      this.setState({
-        mission: cMission,
-        patients: cMission.getPatients(),
-        loading: false,
-      });
-      return cMission;
+        await Promise.all(cMission.getPatients().map((w) => w.fetch()));
+
+        await this.updatePatientSensorInfo(cMission)
+
+        this.setState({
+            mission: cMission,
+            patients: cMission.getPatients(),
+            loading: false,
+        });
+        return cMission;
     });
+  }
+
+    // todo: when a new patient is set as current patient (scanned QR code) we need to make sure that the old ECGs
+    //      are set to THAT patient. This will be needed when we don't know the actual patient at the start of a mission.
+    //      at that point, this method will need to be called since it will update the sensor subscriptions to the
+    //      new patient.
+  async updatePatientSensorInfo(mission) {
+      if (mission.getPatients().length > 0) {
+          // note: this needs to be executed if we change patient during mission (read qr code or smth)
+          const patient = mission.getPatients()[0];
+          const sensorQuery = SensorData.getQueryForCurrentMission(mission, patient);
+
+          const foundData = await sensorQuery.find(); // found data is an array of SensorData that already exists
+          // one SensorData for each reading (start till stop).
+          if (foundData.length > 0) {
+              // we have previous ecgs, probably want to graph them?
+              this.setState({sensorData: foundData.at(-1)}) // sensorData can now be graphed
+          }
+
+          if (this.state.ecgSubscription) {
+              // we already were subscribed to something.
+              this.state.ecgSubscription.unsubscribe()
+          }
+          let sensorSubscription = await sensorQuery.subscribe();
+          sensorSubscription.on('create', (obj) => {
+              // a new ecg was created for this patient and saved to the db => plot that one instead
+              // this is what will happen as soon as you call .save() for the first time.
+              this.setState({sensorData: obj})
+          })
+
+          sensorSubscription.on('enter', (obj) => {
+              // a previous ecg was set to this patient (patient change)
+              // only plot of this is the newest one.
+              if (this.state.sensorData && this.state.sensorData.createdAt > obj.createdAt) {
+                  return; // already have a more recent one. do nothing
+              }
+              this.setState({sensorData: obj})
+          })
+
+          sensorSubscription.on('update', (obj) => {
+              // an existing ecg was updated (more values or a prediction occurred)
+              // if it is the one we are working with, we need it.
+              if (this.state.sensorData && this.state.sensorData.id === obj.id) {
+                  // same one. update our state with new values!
+                  this.setState({sensorData: obj})
+              }
+          })
+
+          this.setState({ecgSubscription: sensorSubscription})
+
+      }
   }
 
   async deviceAction(device) {
     let connectedDevices = this.state.connectedDevices;
     let ecgReading = this.state.ecgReading;
 
-    if (device.action == "Connect") {
+    if (device.action === "Connect") {
       try {
         await device.connect();
         device.action = "Read";
@@ -162,18 +224,20 @@ class MissionScreen extends Component {
         console.log("Failed");
       }
     } else {
-      if (this.state.reading == false) {
+      if (this.state.reading === false) {
         let sensorData = new SensorData();
+        sensorData.setMission(this.state.mission);
+        sensorData.setPatient(this.state.patients[0]); // todo: this just needs to be the current patient
         this.setState({ sensorData });
         device.action = "Stop";
         this.setState({ connectedDevices, reading: true });
         await device.write("start");
-        while (this.state.reading == true) {
+        while (this.state.reading === true) {
           let reading = await device.read();
           reading =
             reading && parseInt(reading.substring(0, reading.length - 1));
           reading && ecgReading.push(reading);
-          if (ecgReading.length == 200) {
+          if (ecgReading.length >= 200) {
             console.log(ecgReading);
             sensorData.addRawECGValues(ecgReading);
             await sensorData.save();
@@ -182,7 +246,7 @@ class MissionScreen extends Component {
           }
           this.setState({ ecgReading });
         }
-      } else if (this.state.reading == true) {
+      } else if (this.state.reading === true) {
         device.action = "Read";
         this.setState({ connectedDevices, reading: false });
         console.log("Stop reading from", device.name);

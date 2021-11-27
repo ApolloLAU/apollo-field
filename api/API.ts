@@ -228,6 +228,14 @@ class SensorData extends Parse.Object {
     this.set('bpm', []);
   }
 
+  setMission(mission: Mission) {
+    this.set('mission', mission)
+  }
+
+  setPatient(p: Patient) {
+    this.set('patient', p);
+  }
+
   addRawECGValues(values: number[]) {
     this.set('raw_ECG', values);
   }
@@ -240,6 +248,13 @@ class SensorData extends Parse.Object {
     if (this.get('bpm').length > 0)
       return this.get('bpm').at(-1);
     return 0;
+  }
+
+  static getQueryForCurrentMission(mission: Mission, patient: Patient) {
+    return new Parse.Query(SensorData)
+        .equalTo('mission', mission)
+        .equalTo('patient', patient)
+        .ascending('createdAt');
   }
 
 }
