@@ -21,7 +21,8 @@ class LoginScreen extends Component {
         const worker = await API.getWorkerForUser(user);
         if (worker) {
           const m = await Mission.getWorkerActiveMission(worker);
-          if (!m) {
+          if (m) {
+            console.log("found a mission! setting status to online!")
             worker.setStatus("online");
           }
           await worker.save();

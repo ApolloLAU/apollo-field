@@ -161,6 +161,8 @@ class ProfileScreen extends Component {
       {
         text: "Yes",
         onPress: async () => {
+          this.state.worker.setStatus("offline");
+          await this.state.worker.save();
           await API.logOut();
           this.props.navigation.reset({
             index: 0,

@@ -19,45 +19,6 @@ export const renderInputToolbar = (props) => (
   />
 );
 
-export const renderActions = (props) => (
-  <Actions
-    {...props}
-    containerStyle={{
-      width: 44,
-      height: 44,
-      alignItems: "center",
-      justifyContent: "center",
-      marginLeft: 4,
-      marginRight: 4,
-      marginBottom: 0,
-    }}
-    icon={() => <AttachIcon width={20} height={20} />}
-    options={{
-      "Choose From Library": async () => {
-        let image = await ImagePicker.launchImageLibraryAsync({
-          mediaTypes: ImagePicker.MediaTypeOptions.Images,
-          allowsEditing: true,
-          quality: 1,
-          base64: true,
-        });
-        console.log(image.base64);
-        console.log(image.uri);
-      },
-      "Take Using Camera": async () => {
-        let image = await ImagePicker.launchCameraAsync({
-          mediaTypes: ImagePicker.MediaTypeOptions.Images,
-          allowsEditing: true,
-          quality: 1,
-          base64: true,
-        });
-        console.log(image.base64);
-        console.log(image.uri);
-      },
-    }}
-    optionTintColor="#550C18"
-  />
-);
-
 export const renderComposer = (props) => (
   <Composer
     {...props}

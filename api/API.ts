@@ -312,6 +312,10 @@ class ChatMessage extends Parse.Object {
     if (img !== undefined) return img.url();
     return null;
   }
+
+  setImage(image) {
+    this.set("image", image)
+  }
 }
 
 class Mission extends Parse.Object {
