@@ -7,7 +7,6 @@ import {
 } from "react-native-gifted-chat";
 import SendIcon from "../assets/svg/send.svg";
 import AttachIcon from "../assets/svg/attach.svg";
-import * as ImagePicker from "expo-image-picker";
 
 export const renderInputToolbar = (props) => (
   <InputToolbar
