@@ -15,6 +15,7 @@ public class BasePackageList {
         new expo.modules.font.FontLoaderPackage(),
         new expo.modules.haptics.HapticsPackage(),
         new expo.modules.imageloader.ImageLoaderPackage(),
+        new expo.modules.imagepicker.ImagePickerPackage(),
         new expo.modules.keepawake.KeepAwakePackage(),
         new expo.modules.splashscreen.SplashScreenPackage(),
         new expo.modules.updates.UpdatesPackage()
