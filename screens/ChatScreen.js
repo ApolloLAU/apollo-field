@@ -2,6 +2,19 @@ import React, { Component } from "react";
 import { SafeAreaView, Text } from "react-native";
 import styles from "../utils/Styles";
 import { GiftedChat } from "react-native-gifted-chat";
+import {
+  renderInputToolbar,
+  renderActions,
+  renderComposer,
+  renderSend,
+} from "../components/InputToolbar";
+import {
+  renderAvatar,
+  renderBubble,
+  renderMessage,
+  renderMessageText,
+  renderCustomView,
+} from "../components/MessageContainer";
 import { API, ChatMessage, Mission } from "../api/API";
 import LoadingComponent from "../components/LoadingComponent";
 
@@ -104,6 +117,15 @@ class ChatScreen extends Component {
             _id: 1,
           }}
           alwaysShowSend
+          renderInputToolbar={renderInputToolbar}
+          renderActions={renderActions}
+          renderComposer={renderComposer}
+          renderSend={renderSend}
+          renderAvatar={renderAvatar}
+          renderBubble={renderBubble}
+          renderMessage={renderMessage}
+          renderMessageText={renderMessageText}
+          // renderMessageImage
         />
       </SafeAreaView>
     ) : (
