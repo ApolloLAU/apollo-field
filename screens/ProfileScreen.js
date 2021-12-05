@@ -3,26 +3,22 @@ import {
   View,
   Text,
   Image,
-  SafeAreaView,
   TouchableOpacity,
-  ScrollView,
   PermissionsAndroid,
+  TextInput,
+  Pressable,
 } from "react-native";
 import styles from "../utils/Styles";
-import MenuIcon from "../assets/svg/menu.svg";
 import BluetoothIcon from "../assets/svg/bluetooth_blue.svg";
 import ScanIcon from "../assets/svg/scan.svg";
 import AddIcon from "../assets/svg/add.svg";
-import TrashIcon from "../assets/svg/trash.svg";
-import CompletedIcon from "../assets/svg/completed.svg";
-import MissionCard from "../components/MissionCard";
+import DateTimePicker from "@react-native-community/datetimepicker";
 import Modal from "react-native-modal";
 import { API } from "../api/API";
-import RNBluetoothClassic, {
-  BluetoothDevice,
-} from "react-native-bluetooth-classic";
+import RNBluetoothClassic from "react-native-bluetooth-classic";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import LoadingComponent from "../components/LoadingComponent";
+import HeaderProfile from "../components/HeaderProfile";
 
 class ProfileScreen extends Component {
   constructor(props) {
@@ -37,6 +33,17 @@ class ProfileScreen extends Component {
       connectedDevices: [],
       scanning: false,
       availableDevices: [],
+
+      editType: "Info",
+      showDatePicker: false,
+
+      editName: "",
+      editDOB: "",
+      editAddress: "",
+      editPhoneNumber: "",
+      editOldPassword: "",
+      editNewPassword: "",
+      editNewPasswordConfirm: "",
     };
   }
 
@@ -122,6 +129,7 @@ class ProfileScreen extends Component {
 
     this.setState({ connectedDevices, scanningModalOpen: false });
   }
+
   async getCurrentWorker() {
     let user = await API.getLoggedInUser();
     let worker = await API.getWorkerForUser(user);
@@ -143,27 +151,55 @@ class ProfileScreen extends Component {
     return worker;
   }
 
+  /*
+  TODO: LOGOUT
+  */
+  async logout() {
+    console.log("Logout");
+  }
+
+  /*
+  TODO: LOGOUT
+  */
+  async editProfileInformation() {
+    console.log("Edit Profile");
+
+    let name = this.state.editName;
+    let dob = this.state.editDOB;
+    let address = this.state.editAddress;
+    let phoneNumber = this.state.editPhoneNumber;
+  }
+
+  /*
+  TODO: LOGOUT
+  */
+  async editPassword() {
+    console.log("Edit Password");
+
+    let oldPassword = this.state.editOldPassword;
+    let newPassword = this.state.editNewPassword;
+    let confirmPassword = this.state.editNewPasswordConfirm;
+  }
+
   render() {
     return this.state.loading ? (
       <LoadingComponent />
     ) : (
-      <SafeAreaView style={styles.container}>
+      <View style={styles.container}>
+        <HeaderProfile
+          onLogoutPress={async () => {
+            await this.logout();
+          }}
+          onEditProfilePress={() => {
+            this.setState({ settingsModalOpen: true });
+          }}
+        />
         <View>
           <View
             style={{
-              flexDirection: "row",
               marginVertical: 20,
-              justifyContent: "space-between",
             }}
           >
-            <TouchableOpacity
-              style={{ padding: 20 }}
-              onPress={() => {
-                this.setState({ settingsModalOpen: true });
-              }}
-            >
-              <MenuIcon width={25} height={25} />
-            </TouchableOpacity>
             <TouchableOpacity
               style={{ justifyContent: "center", alignItems: "center" }}
               onPress={() => this.setState({ statusModalOpen: true })}
@@ -179,7 +215,6 @@ class ProfileScreen extends Component {
                 }}
               />
             </TouchableOpacity>
-            <View style={{ width: 65 }} />
           </View>
           <View
             style={{
@@ -201,6 +236,7 @@ class ProfileScreen extends Component {
                 style={{
                   flexDirection: "row",
                   justifyContent: "space-between",
+                  alignItems: "center",
                 }}
               >
                 <View style={{ flexDirection: "row", marginBottom: 10 }}>
@@ -212,21 +248,11 @@ class ProfileScreen extends Component {
                   </Text>
                 </View>
                 <TouchableOpacity
-                  style={{
-                    flexDirection: "row",
-                    marginBottom: 10,
-                    alignItems: "center",
-                  }}
                   onPress={async () => {
                     await this.scanForDevices();
                   }}
                 >
-                  <View style={{ marginEnd: 10 }}>
-                    <ScanIcon width={25} height={25} fill="#294C60" />
-                  </View>
-                  <Text style={[styles.semibold20, { color: "#294C60" }]}>
-                    Scan
-                  </Text>
+                  <ScanIcon width={25} height={25} fill="#294C60" />
                 </TouchableOpacity>
               </View>
 
@@ -257,34 +283,169 @@ class ProfileScreen extends Component {
                 </View>
               ))}
             </View>
-
-            <View style={{ flexDirection: "row", marginBottom: 10 }}>
-              <View style={{ marginEnd: 10 }}>
-                <CompletedIcon width={25} height={25} />
-              </View>
-            </View>
           </View>
         </View>
         <Modal
           isVisible={this.state.settingsModalOpen}
           useNativeDriver
-          swipeDirection="left"
-          animationIn="slideInLeft"
-          animationOut="slideOutLeft"
+          swipeDirection="down"
           statusBarTranslucent
           onSwipeThreshold={200}
           onSwipeComplete={() => this.setState({ settingsModalOpen: false })}
           onBackdropPress={() => this.setState({ settingsModalOpen: false })}
           style={{ margin: 0 }}
         >
-          <View style={styles.sideModalContainer}>
+          <View style={[styles.bottomModalContainer, { height: "55%" }]}>
             <View
               style={{
                 width: "100%",
                 justifyContent: "center",
-                alignItems: "center",
+                paddingHorizontal: 20,
               }}
-            ></View>
+            >
+              <View
+                style={{
+                  flexDirection: "row",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  marginBottom: 10,
+                }}
+              >
+                <TouchableOpacity
+                  onPress={() => {
+                    this.setState({ settingsModalOpen: false });
+                  }}
+                >
+                  <Text style={styles.semibold18}>Cancel</Text>
+                </TouchableOpacity>
+                <View style={{ flexDirection: "row", alignItems: "center" }}>
+                  <Pressable
+                    style={{
+                      backgroundColor: "#F2F2F2",
+                      borderTopLeftRadius: 10,
+                      borderBottomLeftRadius: 10,
+                      padding: 10,
+                      opacity: this.state.editType === "Info" ? 0.4 : 1,
+                    }}
+                    onPress={() => {
+                      this.setState({ editType: "Info" });
+                    }}
+                  >
+                    <Text style={styles.semibold15}>Information</Text>
+                  </Pressable>
+                  <Pressable
+                    style={{
+                      backgroundColor: "#F2F2F2",
+                      borderTopRightRadius: 10,
+                      borderBottomRightRadius: 10,
+                      padding: 10,
+                      opacity: this.state.editType === "Pass" ? 0.4 : 1,
+                    }}
+                    onPress={() => {
+                      this.setState({ editType: "Pass" });
+                    }}
+                  >
+                    <Text style={styles.semibold15}>Password</Text>
+                  </Pressable>
+                </View>
+                <TouchableOpacity
+                  onPress={async () => {
+                    this.state.editType == "Info"
+                      ? await this.editProfileInformation()
+                      : await this.editPassword();
+                  }}
+                >
+                  <Text style={styles.semibold18}>Done</Text>
+                </TouchableOpacity>
+              </View>
+              {this.state.editType == "Info" ? (
+                <View>
+                  <Text style={styles.editTitleStyle}>Full Name</Text>
+                  <TextInput
+                    style={styles.editTextInput}
+                    defaultValue={this.state.worker.getFormattedName()}
+                    onChangeText={(editName) => {
+                      this.setState({ editName });
+                    }}
+                  />
+                  <Text style={styles.editTitleStyle}>Date Of Birth</Text>
+                  <Pressable
+                    onPress={() => this.setState({ showDatePicker: true })}
+                  >
+                    <View pointerEvents="none">
+                      <TextInput
+                        style={styles.editTextInput}
+                        defaultValue={new Date().toDateString()}
+                        enabled={false}
+                        onPress={() => {
+                          this.setState({ showDatePicker: true });
+                        }}
+                      />
+                    </View>
+                  </Pressable>
+
+                  {this.state.showDatePicker && (
+                    <DateTimePicker
+                      value={new Date()}
+                      mode="date"
+                      display="default"
+                      style={{
+                        flex: 1.5,
+                      }}
+                      onChange={(event, dob) => {
+                        this.setState({ editDOB: dob, showDatePicker: false });
+                      }}
+                    />
+                  )}
+                  <Text style={styles.editTitleStyle}>Address</Text>
+                  <TextInput
+                    style={styles.editTextInput}
+                    defaultValue={""}
+                    onChangeText={(editAddress) => {
+                      this.setState({ editAddress });
+                    }}
+                  />
+                  <Text style={styles.editTitleStyle}>Phone Number</Text>
+                  <TextInput
+                    style={styles.editTextInput}
+                    defaultValue={""}
+                    onChangeText={(editPhoneNumber) => {
+                      this.setState({ editPhoneNumber });
+                    }}
+                  />
+                </View>
+              ) : (
+                <View>
+                  <Text style={styles.editTitleStyle}>Old Password</Text>
+                  <TextInput
+                    style={styles.editTextInput}
+                    secureTextEntry
+                    defaultValue={""}
+                    onChangeText={(editOldPassword) => {
+                      this.setState({ editOldPassword });
+                    }}
+                  />
+                  <Text style={styles.editTitleStyle}>New Password</Text>
+                  <TextInput
+                    style={styles.editTextInput}
+                    secureTextEntry
+                    defaultValue={""}
+                    onChangeText={(editNewPassword) => {
+                      this.setState({ editNewPassword });
+                    }}
+                  />
+                  <Text style={styles.editTitleStyle}>Confirm Password</Text>
+                  <TextInput
+                    style={styles.editTextInput}
+                    secureTextEntry
+                    defaultValue={""}
+                    onChangeText={(editNewPasswordConfirm) => {
+                      this.setState({ editNewPasswordConfirm });
+                    }}
+                  />
+                </View>
+              )}
+            </View>
           </View>
         </Modal>
         <Modal
@@ -432,7 +593,7 @@ class ProfileScreen extends Component {
             )}
           </View>
         </Modal>
-      </SafeAreaView>
+      </View>
     );
   }
 }

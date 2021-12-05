@@ -111,6 +111,25 @@ export default styles = {
     color: "#294C60",
     paddingStart: 15,
   },
+  editTitleStyle: {
+    fontFamily: "Raleway_Semibold",
+    fontSize: 15,
+    color: "#550C18",
+    marginBottom: 5,
+  },
+  editTextInput: {
+    height: 40,
+    width: "100%",
+    flexDirection: "row",
+    alignItems: "center",
+    color: "#294C60",
+    borderRadius: 20,
+    marginBottom: 20,
+    paddingStart: 15,
+    backgroundColor: "#F7F7F7",
+    fontFamily: "Raleway_Regular",
+    fontSize: 14,
+  },
   thin10: {
     fontFamily: "Raleway_Thin",
     fontSize: 10,
@@ -134,7 +153,7 @@ export default styles = {
   },
   semibold18: {
     fontFamily: "Raleway_Semibold",
-    fontSize: 15,
+    fontSize: 18,
   },
   semibold20: {
     fontFamily: "Raleway_Semibold",

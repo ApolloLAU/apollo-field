@@ -20,6 +20,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import RNBluetoothClassic from "react-native-bluetooth-classic";
 import { LineChart } from "react-native-chart-kit";
 import LoadingComponent from "../components/LoadingComponent";
+import Header from "../components/Header";
 
 class MissionScreen extends Component {
   constructor(props) {
@@ -40,7 +41,6 @@ class MissionScreen extends Component {
   }
 
   // todo: the data points you need to plot are available at this.state.sensorData.getCleanECGVals() (no x-values, just y values)
-
 
   async componentDidMount() {
     let mission = await this.getMissionInformation();
@@ -117,7 +117,6 @@ class MissionScreen extends Component {
             }
 
             if (!this.state.ecgSubscription) {
-
             }
 
             if (currentMission !== null) {
@@ -147,68 +146,73 @@ class MissionScreen extends Component {
 
   async fetchCurrentMission(mission) {
     return mission.fetch().then(async (cMission) => {
-        await Promise.all(cMission.getPatients().map((w) => w.fetch()));
+      await Promise.all(cMission.getPatients().map((w) => w.fetch()));
 
-        await this.updatePatientSensorInfo(cMission)
+      await this.updatePatientSensorInfo(cMission);
 
-        this.setState({
-            mission: cMission,
-            patients: cMission.getPatients(),
-            loading: false,
-        });
-        return cMission;
+      this.setState({
+        mission: cMission,
+        patients: cMission.getPatients(),
+        loading: false,
+      });
+      return cMission;
     });
   }
 
-    // todo: when a new patient is set as current patient (scanned QR code) we need to make sure that the old ECGs
-    //      are set to THAT patient. This will be needed when we don't know the actual patient at the start of a mission.
-    //      at that point, this method will need to be called since it will update the sensor subscriptions to the
-    //      new patient.
+  // todo: when a new patient is set as current patient (scanned QR code) we need to make sure that the old ECGs
+  //      are set to THAT patient. This will be needed when we don't know the actual patient at the start of a mission.
+  //      at that point, this method will need to be called since it will update the sensor subscriptions to the
+  //      new patient.
   async updatePatientSensorInfo(mission) {
-      if (mission.getPatients().length > 0) {
-          // note: this needs to be executed if we change patient during mission (read qr code or smth)
-          const patient = mission.getPatients()[0];
-          const sensorQuery = SensorData.getQueryForCurrentMission(mission, patient);
+    if (mission.getPatients().length > 0) {
+      // note: this needs to be executed if we change patient during mission (read qr code or smth)
+      const patient = mission.getPatients()[0];
+      const sensorQuery = SensorData.getQueryForCurrentMission(
+        mission,
+        patient
+      );
 
-          const foundData = await sensorQuery.find(); // found data is an array of SensorData that already exists
-          // one SensorData for each reading (start till stop).
-          if (foundData.length > 0) {
-              // we have previous ecgs, probably want to graph them?
-              this.setState({sensorData: foundData.at(-1)}) // sensorData can now be graphed
-          }
-
-          if (this.state.ecgSubscription) {
-              // we already were subscribed to something.
-              this.state.ecgSubscription.unsubscribe()
-          }
-          let sensorSubscription = await sensorQuery.subscribe();
-          sensorSubscription.on('create', (obj) => {
-              // a new ecg was created for this patient and saved to the db => plot that one instead
-              // this is what will happen as soon as you call .save() for the first time.
-              this.setState({sensorData: obj})
-          })
-
-          sensorSubscription.on('enter', (obj) => {
-              // a previous ecg was set to this patient (patient change)
-              // only plot of this is the newest one.
-              if (this.state.sensorData && this.state.sensorData.createdAt > obj.createdAt) {
-                  return; // already have a more recent one. do nothing
-              }
-              this.setState({sensorData: obj})
-          })
-
-          sensorSubscription.on('update', (obj) => {
-              // an existing ecg was updated (more values or a prediction occurred)
-              // if it is the one we are working with, we need it.
-              if (this.state.sensorData && this.state.sensorData.id === obj.id) {
-                  // same one. update our state with new values!
-                  this.setState({sensorData: obj})
-              }
-          })
-
-          this.setState({ecgSubscription: sensorSubscription})
-
+      const foundData = await sensorQuery.find(); // found data is an array of SensorData that already exists
+      // one SensorData for each reading (start till stop).
+      if (foundData.length > 0) {
+        // we have previous ecgs, probably want to graph them?
+        this.setState({ sensorData: foundData[foundData.length - 1] }); // sensorData can now be graphed
       }
+
+      if (this.state.ecgSubscription) {
+        // we already were subscribed to something.
+        this.state.ecgSubscription.unsubscribe();
+      }
+      let sensorSubscription = await sensorQuery.subscribe();
+      sensorSubscription.on("create", (obj) => {
+        // a new ecg was created for this patient and saved to the db => plot that one instead
+        // this is what will happen as soon as you call .save() for the first time.
+        this.setState({ sensorData: obj });
+      });
+
+      sensorSubscription.on("enter", (obj) => {
+        // a previous ecg was set to this patient (patient change)
+        // only plot of this is the newest one.
+        if (
+          this.state.sensorData &&
+          this.state.sensorData.createdAt > obj.createdAt
+        ) {
+          return; // already have a more recent one. do nothing
+        }
+        this.setState({ sensorData: obj });
+      });
+
+      sensorSubscription.on("update", (obj) => {
+        // an existing ecg was updated (more values or a prediction occurred)
+        // if it is the one we are working with, we need it.
+        if (this.state.sensorData && this.state.sensorData.id === obj.id) {
+          // same one. update our state with new values!
+          this.setState({ sensorData: obj });
+        }
+      });
+
+      this.setState({ ecgSubscription: sensorSubscription });
+    }
   }
 
   async deviceAction(device) {
@@ -310,7 +314,6 @@ class MissionScreen extends Component {
           }}
         />
         <Text style={titleStyle}>Sex</Text>
-
         <View
           style={{
             flexDirection: "row",
@@ -466,7 +469,7 @@ class MissionScreen extends Component {
     } else {
       // todo: depending on location and initial diagnosis text size, the entire screen may not fit and will need to be scrollable
       return (
-        <SafeAreaView style={styles.container}>
+        <View style={styles.container}>
           <ImageBackground
             source={require("../assets/png/frs-logo-low.png")}
             style={{
@@ -476,6 +479,7 @@ class MissionScreen extends Component {
             imageStyle={{ opacity: 0.03 }}
             resizeMode={"contain"}
           >
+            <Header />
             <ScrollView>
               <View style={{ paddingHorizontal: 20, marginBottom: 30 }}>
                 <Text
@@ -682,7 +686,7 @@ class MissionScreen extends Component {
               />
             </View>
           </Modal>
-        </SafeAreaView>
+        </View>
       );
     }
   }
