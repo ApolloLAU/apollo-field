@@ -7,6 +7,7 @@ import {
   PermissionsAndroid,
   TextInput,
   Pressable,
+  Alert,
 } from "react-native";
 import styles from "../utils/Styles";
 import BluetoothIcon from "../assets/svg/bluetooth_blue.svg";
@@ -37,7 +38,8 @@ class ProfileScreen extends Component {
       editType: "Info",
       showDatePicker: false,
 
-      editName: "",
+      editFirstName: "",
+      editLastName: "",
       editDOB: "",
       editAddress: "",
       editPhoneNumber: "",
@@ -152,43 +154,47 @@ class ProfileScreen extends Component {
   }
 
   async logout() {
-    console.log("Logout");
-
-    await API.logOut();
-    // TODO: Go back to login
+    Alert.alert("Logging-Out", "Are you sure you want to log out?", [
+      {
+        text: "Cancel",
+      },
+      {
+        text: "Yes",
+        onPress: async () => {
+          await API.logOut();
+          this.props.navigation.reset({
+            index: 0,
+            routes: [{ name: "LoginScreen" }],
+          });
+        },
+      },
+    ]);
   }
 
   async editProfileInformation() {
-    console.log("Edit Profile");
-
-    let name = this.state.editName; // TODO: need first name / last name.
-    let dob = this.state.editDOB; // TODO: no dob in db in worker. remove it
-    let address = this.state.editAddress; // TODO: no address field in worker anyways. remove it
+    let firstName = this.state.editFirstName; // TODO: need first name / last name.
+    let lastName = this.state.editLastName;
     let phoneNumber = this.state.editPhoneNumber;
     const w = this.state.worker;
-    // w.setFirstName("")
-    //   w.setLastName("")
-      w.setCellNbr(phoneNumber)
-      await w.save()
+    w.setFirstName(firstName);
+    w.setLastName(lastName);
+    w.setCellNbr(phoneNumber);
+    await w.save();
   }
 
-
   async editPassword() {
-    console.log("Edit Password");
-
     let oldPassword = this.state.editOldPassword; // cant actually read this to check.
     let newPassword = this.state.editNewPassword;
     let confirmPassword = this.state.editNewPasswordConfirm;
 
     const user = await API.getLoggedInUser();
-    const p = user.get('password')
+    const p = user.get("password");
     if (oldPassword === p && newPassword === confirmPassword) {
-        user.set('password', newPassword);
-        await user.save();
+      user.set("password", newPassword);
+      await user.save();
     } else {
-        // something went wrong
+      // something went wrong
     }
-
   }
 
   render() {
@@ -305,7 +311,7 @@ class ProfileScreen extends Component {
           onBackdropPress={() => this.setState({ settingsModalOpen: false })}
           style={{ margin: 0 }}
         >
-          <View style={[styles.bottomModalContainer, { height: "55%" }]}>
+          <View style={[styles.bottomModalContainer, { height: "40%" }]}>
             <View
               style={{
                 width: "100%",
@@ -370,49 +376,20 @@ class ProfileScreen extends Component {
               </View>
               {this.state.editType == "Info" ? (
                 <View>
-                  <Text style={styles.editTitleStyle}>Full Name</Text>
+                  <Text style={styles.editTitleStyle}>First Name</Text>
                   <TextInput
                     style={styles.editTextInput}
-                    defaultValue={this.state.worker.getFormattedName()}
-                    onChangeText={(editName) => {
-                      this.setState({ editName });
+                    defaultValue={this.state.worker.getFirstName()}
+                    onChangeText={(editFirstName) => {
+                      this.setState({ editFirstName });
                     }}
                   />
-                  <Text style={styles.editTitleStyle}>Date Of Birth</Text>
-                  <Pressable
-                    onPress={() => this.setState({ showDatePicker: true })}
-                  >
-                    <View pointerEvents="none">
-                      <TextInput
-                        style={styles.editTextInput}
-                        defaultValue={new Date().toDateString()}
-                        enabled={false}
-                        onPress={() => {
-                          this.setState({ showDatePicker: true });
-                        }}
-                      />
-                    </View>
-                  </Pressable>
-
-                  {this.state.showDatePicker && (
-                    <DateTimePicker
-                      value={new Date()}
-                      mode="date"
-                      display="default"
-                      style={{
-                        flex: 1.5,
-                      }}
-                      onChange={(event, dob) => {
-                        this.setState({ editDOB: dob, showDatePicker: false });
-                      }}
-                    />
-                  )}
-                  <Text style={styles.editTitleStyle}>Address</Text>
+                  <Text style={styles.editTitleStyle}>Last Name</Text>
                   <TextInput
                     style={styles.editTextInput}
-                    defaultValue={""}
-                    onChangeText={(editAddress) => {
-                      this.setState({ editAddress });
+                    defaultValue={this.state.worker.getLastName()}
+                    onChangeText={(editLastName) => {
+                      this.setState({ editLastName });
                     }}
                   />
                   <Text style={styles.editTitleStyle}>Phone Number</Text>
