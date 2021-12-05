@@ -7,6 +7,7 @@ import {
 } from "react-native-gifted-chat";
 import SendIcon from "../assets/svg/send.svg";
 import AttachIcon from "../assets/svg/attach.svg";
+import * as ImagePicker from "expo-image-picker";
 
 export const renderInputToolbar = (props) => (
   <InputToolbar
@@ -32,11 +33,25 @@ export const renderActions = (props) => (
     }}
     icon={() => <AttachIcon width={20} height={20} />}
     options={{
-      "Choose From Library": () => {
-        console.log("Take Using Camera");
+      "Choose From Library": async () => {
+        let image = await ImagePicker.launchImageLibraryAsync({
+          mediaTypes: ImagePicker.MediaTypeOptions.Images,
+          allowsEditing: true,
+          quality: 1,
+          base64: true,
+        });
+        console.log(image.base64);
+        console.log(image.uri);
       },
-      "Take Using Camera": () => {
-        console.log("Take Using Camera");
+      "Take Using Camera": async () => {
+        let image = await ImagePicker.launchCameraAsync({
+          mediaTypes: ImagePicker.MediaTypeOptions.Images,
+          allowsEditing: true,
+          quality: 1,
+          base64: true,
+        });
+        console.log(image.base64);
+        console.log(image.uri);
       },
     }}
     optionTintColor="#550C18"
