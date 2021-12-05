@@ -151,34 +151,44 @@ class ProfileScreen extends Component {
     return worker;
   }
 
-  /*
-  TODO: LOGOUT
-  */
   async logout() {
     console.log("Logout");
+
+    await API.logOut();
+    // TODO: Go back to login
   }
 
-  /*
-  TODO: LOGOUT
-  */
   async editProfileInformation() {
     console.log("Edit Profile");
 
-    let name = this.state.editName;
-    let dob = this.state.editDOB;
-    let address = this.state.editAddress;
+    let name = this.state.editName; // TODO: need first name / last name.
+    let dob = this.state.editDOB; // TODO: no dob in db in worker. remove it
+    let address = this.state.editAddress; // TODO: no address field in worker anyways. remove it
     let phoneNumber = this.state.editPhoneNumber;
+    const w = this.state.worker;
+    // w.setFirstName("")
+    //   w.setLastName("")
+      w.setCellNbr(phoneNumber)
+      await w.save()
   }
 
-  /*
-  TODO: LOGOUT
-  */
+
   async editPassword() {
     console.log("Edit Password");
 
-    let oldPassword = this.state.editOldPassword;
+    let oldPassword = this.state.editOldPassword; // cant actually read this to check.
     let newPassword = this.state.editNewPassword;
     let confirmPassword = this.state.editNewPasswordConfirm;
+
+    const user = await API.getLoggedInUser();
+    const p = user.get('password')
+    if (oldPassword === p && newPassword === confirmPassword) {
+        user.set('password', newPassword);
+        await user.save();
+    } else {
+        // something went wrong
+    }
+
   }
 
   render() {
