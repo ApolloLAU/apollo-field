@@ -27,14 +27,13 @@ class Patient extends Parse.Object {
     p.setHomeAddress('');
     p.setAllergies('');
     p.setBloodType('');
-    p.setPrevConditions('');
+    p.setPrevConditions(false);
     p.setCellNbr('');
     p.setEmergencyNbr('');
     p.setDOB(new Date(0));
     p.setLastName('');
     p.setWeight(-1.0);
     p.setSex('');
-    p.set('abnormalities', []);
     return p;
   }
 
@@ -143,7 +142,7 @@ class Patient extends Parse.Object {
     return this.get('prev_conditions');
   }
 
-  setPrevConditions(prevConditions: string) {
+  setPrevConditions(prevConditions: boolean) {
     this.set('prev_conditions', prevConditions);
   }
 

@@ -426,19 +426,22 @@ class MissionScreen extends Component {
             marginBottom: 10,
           }}
         >
-          {item.getAbnormalities().map((abn, abnIndex) => (
             <Chip
-              key={abnIndex}
-              pressed={abn.status}
-              style={{ width: "45%", margin: 5 }}
-              chipText={abn.name}
-              onPress={() => {
-                abn.status = !abn.status;
-                let mission = this.state.mission;
-                this.setState({ mission });
-              }}
+                pressed={item.getPrevConditions()}
+                style={{ width: "45%", margin: 5 }}
+                chipText={"Yes"}
+                onPress={() => {
+                    item.setPrevConditions(true)
+                }}
             />
-          ))}
+            <Chip
+                pressed={!item.getPrevConditions()}
+                style={{ width: "45%", margin: 5 }}
+                chipText={"No"}
+                onPress={() => {
+                    item.setPrevConditions(false)
+                }}
+            />
         </View>
       </ScrollView>
     );
