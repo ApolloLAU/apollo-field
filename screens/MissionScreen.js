@@ -35,7 +35,6 @@ class MissionScreen extends Component {
       missionSubscription: undefined,
       ecgSubscription: undefined,
       reading: false,
-      ecgReading: [],
       sensorData: undefined, //todo: make sure you check for undefined before plotting anything. Using undefined so we can tell if we have data or not.
     };
   }
@@ -207,7 +206,11 @@ class MissionScreen extends Component {
         // if it is the one we are working with, we need it.
         if (this.state.sensorData && this.state.sensorData.id === obj.id) {
           // same one. update our state with new values!
-          this.setState({ sensorData: obj });
+          let data = obj.getCleanECGVals();
+          if (data.length > 200) {
+            data = data.splice(data.length - 200, data.length);
+          }
+          this.setState({ sensorData: data });
         }
       });
 
@@ -217,16 +220,12 @@ class MissionScreen extends Component {
 
   async deviceAction(device) {
     let connectedDevices = this.state.connectedDevices;
-    let ecgReading = this.state.ecgReading;
+    let ecgReading = [];
 
     if (device.action === "Connect") {
-      try {
-        await device.connect();
-        device.action = "Read";
-        this.setState({ connectedDevices });
-      } catch (e) {
-        console.log("Failed");
-      }
+      await device.connect().catch((e) => console.log("Failed"));
+      device.action = "Read";
+      this.setState({ connectedDevices });
     } else {
       if (this.state.reading === false) {
         let sensorData = new SensorData();
@@ -234,27 +233,26 @@ class MissionScreen extends Component {
         sensorData.setPatient(this.state.patients[0]); // todo: this just needs to be the current patient
         this.setState({ sensorData });
         device.action = "Stop";
+        device.status = "Reading...";
         this.setState({ connectedDevices, reading: true });
         await device.write("start");
         while (this.state.reading === true) {
           let reading = await device.read();
-          reading =
-            reading && parseInt(reading.substring(0, reading.length - 1));
-          reading && ecgReading.push(reading);
+          if (reading) {
+            reading = parseInt(reading.substring(0, reading.length - 1));
+            ecgReading.push(reading);
+          }
           if (ecgReading.length >= 200) {
-            console.log(ecgReading);
             sensorData.addRawECGValues(ecgReading);
             await sensorData.save();
-            // ecgReading.shift();
             ecgReading = [];
           }
-          this.setState({ ecgReading });
         }
       } else if (this.state.reading === true) {
+        device.status = "Standby";
         device.action = "Read";
         this.setState({ connectedDevices, reading: false });
         console.log("Stop reading from", device.name);
-
         await device.write("stop");
       }
     }
@@ -582,7 +580,7 @@ class MissionScreen extends Component {
                   ))}
                 </View>
                 <View style={{ marginBottom: 20 }}>
-                  {this.state.ecgReading.length != 0 && (
+                  {this.state.sensorData.length >= 0 && (
                     <View style={{ width: "100%" }}>
                       <Text style={styles.semibold20}>ECG Data</Text>
                       <LineChart
@@ -590,7 +588,7 @@ class MissionScreen extends Component {
                           labels: [],
                           datasets: [
                             {
-                              data: this.state.ecgReading,
+                              data: this.state.sensorData,
                             },
                           ],
                         }}
@@ -667,10 +665,12 @@ class MissionScreen extends Component {
                   alignItems: "center",
                 }}
               >
-                <BottomModalIndexIndicator
-                  total={this.state.patients.length}
-                  current={this.state.activeIndex}
-                />
+                {this.state.patients.length <= 1 && (
+                  <BottomModalIndexIndicator
+                    total={this.state.patients.length}
+                    current={this.state.activeIndex}
+                  />
+                )}
               </View>
               <Carousel
                 ref={(c) => {
