@@ -8,6 +8,8 @@ import {
   Dimensions,
   TextInput,
   ScrollView,
+  LogBox,
+  StyleSheet,
 } from "react-native";
 import styles from "../utils/Styles";
 import BluetoothIcon from "../assets/svg/bluetooth.svg";
@@ -21,6 +23,11 @@ import RNBluetoothClassic from "react-native-bluetooth-classic";
 import { LineChart } from "react-native-chart-kit";
 import LoadingComponent from "../components/LoadingComponent";
 import Header from "../components/Header";
+import QRCodeIcon from "../assets/svg/qrcode.svg";
+import { BarCodeScanner } from "expo-barcode-scanner";
+import { Camera } from "expo-camera";
+
+LogBox.ignoreAllLogs(true);
 
 class MissionScreen extends Component {
   constructor(props) {
@@ -35,6 +42,9 @@ class MissionScreen extends Component {
       missionSubscription: undefined,
       ecgSubscription: undefined,
       reading: false,
+      scanned: false,
+      scanningQRCode: false,
+      rawReading: undefined,
       sensorData: undefined, //todo: make sure you check for undefined before plotting anything. Using undefined so we can tell if we have data or not.
     };
   }
@@ -45,7 +55,6 @@ class MissionScreen extends Component {
     let mission = await this.getMissionInformation();
     await this.getPairedDevices();
     this.setState({ mission });
-
     this.setState({ loading: false });
   }
 
@@ -175,7 +184,13 @@ class MissionScreen extends Component {
       // one SensorData for each reading (start till stop).
       if (foundData.length > 0) {
         // we have previous ecgs, probably want to graph them?
-        this.setState({ sensorData: foundData[foundData.length - 1] }); // sensorData can now be graphed
+        let data = foundData[foundData.length - 1].getCleanECGVals();
+        if (data.length > 200) {
+          data = data.splice(data.length - 200, data.length);
+        }
+        this.setState({
+          sensorData: data,
+        }); // sensorData can now be graphed
       }
 
       if (this.state.ecgSubscription) {
@@ -186,7 +201,11 @@ class MissionScreen extends Component {
       sensorSubscription.on("create", (obj) => {
         // a new ecg was created for this patient and saved to the db => plot that one instead
         // this is what will happen as soon as you call .save() for the first time.
-        this.setState({ sensorData: obj });
+        let data = obj.getCleanECGVals();
+        if (data.length > 200) {
+          data = data.splice(data.length - 200, data.length);
+        }
+        this.setState({ sensorData: data });
       });
 
       sensorSubscription.on("enter", (obj) => {
@@ -198,7 +217,11 @@ class MissionScreen extends Component {
         ) {
           return; // already have a more recent one. do nothing
         }
-        this.setState({ sensorData: obj });
+        let data = obj.getCleanECGVals();
+        if (data.length > 200) {
+          data = data.splice(data.length - 200, data.length);
+        }
+        this.setState({ sensorData: data });
       });
 
       sensorSubscription.on("update", (obj) => {
@@ -222,39 +245,39 @@ class MissionScreen extends Component {
     let connectedDevices = this.state.connectedDevices;
     let ecgReading = [];
 
-    if (device.action === "Connect") {
-      await device.connect().catch((e) => console.log("Failed"));
-      device.action = "Read";
-      this.setState({ connectedDevices });
-    } else {
-      if (this.state.reading === false) {
-        let sensorData = new SensorData();
-        sensorData.setMission(this.state.mission);
-        sensorData.setPatient(this.state.patients[0]); // todo: this just needs to be the current patient
-        this.setState({ sensorData });
-        device.action = "Stop";
-        device.status = "Reading...";
-        this.setState({ connectedDevices, reading: true });
-        await device.write("start");
-        while (this.state.reading === true) {
-          let reading = await device.read();
-          if (reading) {
-            reading = parseInt(reading.substring(0, reading.length - 1));
-            ecgReading.push(reading);
-          }
-          if (ecgReading.length >= 200) {
-            sensorData.addRawECGValues(ecgReading);
-            await sensorData.save();
-            ecgReading = [];
-          }
+    await device.connect().catch((e) => console.log("Failed"));
+    device.action = "Read";
+    this.setState({ connectedDevices });
+
+    if (this.state.reading === false) {
+      let sensorData = new SensorData();
+      sensorData.setMission(this.state.mission);
+      sensorData.setPatient(this.state.patients[0]); // todo: this just needs to be the current patient
+      device.action = "Stop";
+      device.status = "Reading...";
+      this.setState({ connectedDevices, reading: true });
+      await device.write("start");
+      while (this.state.reading === true) {
+        let reading = await device.read();
+        if (reading) {
+          reading = parseInt(reading.substring(0, reading.length - 1));
+          // console.log(reading);
+          ecgReading.push(reading);
         }
-      } else if (this.state.reading === true) {
-        device.status = "Standby";
-        device.action = "Read";
-        this.setState({ connectedDevices, reading: false });
-        console.log("Stop reading from", device.name);
-        await device.write("stop");
+        if (ecgReading.length >= 50) {
+          // sensorData.addRawECGValues(ecgReading);
+          // sensorData.save();
+          this.setState({ rawReading: ecgReading });
+          ecgReading.shift();
+          // ecgReading = [];
+        }
       }
+    } else if (this.state.reading === true) {
+      device.status = "Standby";
+      device.action = "Read";
+      this.setState({ connectedDevices, reading: false });
+      console.log("Stop reading from", device.name);
+      await device.write("stop");
     }
   }
 
@@ -290,18 +313,32 @@ class MissionScreen extends Component {
           }}
         >
           <Text style={civilianTitleStyle}>{item.getFormattedName()}</Text>
-          <TouchableOpacity
-            onPress={() => {
-              item.save().then((t) =>
+          <View style={{ flexDirection: "row" }}>
+            <TouchableOpacity
+              onPress={() => {
                 this.setState({
-                  mission,
+                  scanningQRCode: true,
+                  scanned: false,
                   civilianInformationModalOpen: false,
-                })
-              );
-            }}
-          >
-            <Text style={civilianTitleStyle}>Save</Text>
-          </TouchableOpacity>
+                });
+              }}
+            >
+              <QRCodeIcon width={20} height={20} fill="#000000" />
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={{ marginStart: 10 }}
+              onPress={() => {
+                item.save().then((t) =>
+                  this.setState({
+                    mission,
+                    civilianInformationModalOpen: false,
+                  })
+                );
+              }}
+            >
+              <Text style={civilianTitleStyle}>Save</Text>
+            </TouchableOpacity>
+          </View>
         </View>
         <Text style={titleStyle}>Full Name</Text>
         <TextInput
@@ -424,26 +461,30 @@ class MissionScreen extends Component {
             marginBottom: 10,
           }}
         >
-            <Chip
-                pressed={item.getPrevConditions()}
-                style={{ width: "45%", margin: 5 }}
-                chipText={"Yes"}
-                onPress={() => {
-                    item.setPrevConditions(true)
-                }}
-            />
-            <Chip
-                pressed={!item.getPrevConditions()}
-                style={{ width: "45%", margin: 5 }}
-                chipText={"No"}
-                onPress={() => {
-                    item.setPrevConditions(false)
-                }}
-            />
+          <Chip
+            pressed={item.getPrevConditions()}
+            style={{ width: "45%", margin: 5 }}
+            chipText={"Yes"}
+            onPress={() => {
+              item.setPrevConditions(true);
+            }}
+          />
+          <Chip
+            pressed={!item.getPrevConditions()}
+            style={{ width: "45%", margin: 5 }}
+            chipText={"No"}
+            onPress={() => {
+              item.setPrevConditions(false);
+            }}
+          />
         </View>
       </ScrollView>
     );
   };
+
+  async getPatientInfoFromQRCode(id) {
+    console.log(id);
+  }
 
   // todo: idk if this is possible, but when only one patient, carousel shouldn't show the single dot cuz it doesn't make sense.
   // todo: previous heart conditions should now be a single checkbox
@@ -467,12 +508,28 @@ class MissionScreen extends Component {
           </Text>
         </View>
       );
+    } else if (this.state.scanningQRCode) {
+      return (
+        <View style={styles.container}>
+          <Camera
+            style={{ flex: 1 }}
+            onBarCodeScanned={async ({ type, data }) => {
+              this.setState({ scanned: true });
+              this.setState({
+                scanningQRCode: false,
+                civilianInformationModalOpen: true,
+              });
+              await this.getPatientInfoFromQRCode(data);
+            }}
+          />
+        </View>
+      );
     } else {
       // todo: depending on location and initial diagnosis text size, the entire screen may not fit and will need to be scrollable
       return (
         <View style={styles.container}>
           <ImageBackground
-            source={require("../assets/png/frs-logo-low.png")}
+            source={require("../assets/png/apollo.png")}
             style={{
               height: "100%",
               flex: 1,
@@ -583,7 +640,7 @@ class MissionScreen extends Component {
                   ))}
                 </View>
                 <View style={{ marginBottom: 20 }}>
-                  {this.state.sensorData.length >= 0 && (
+                  {this.state.rawReading && (
                     <View style={{ width: "100%" }}>
                       <Text style={styles.semibold20}>ECG Data</Text>
                       <LineChart
@@ -591,7 +648,7 @@ class MissionScreen extends Component {
                           labels: [],
                           datasets: [
                             {
-                              data: this.state.sensorData,
+                              data: this.state.rawReading,
                             },
                           ],
                         }}
@@ -668,7 +725,7 @@ class MissionScreen extends Component {
                   alignItems: "center",
                 }}
               >
-                {this.state.patients.length <= 1 && (
+                {this.state.patients.length > 1 && (
                   <BottomModalIndexIndicator
                     total={this.state.patients.length}
                     current={this.state.activeIndex}
