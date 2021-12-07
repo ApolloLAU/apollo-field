@@ -20,6 +20,10 @@ class Patient extends Parse.Object {
     super('Patient');
   }
 
+  static getById(id: string): Promise<Patient | undefined> {
+    return new Parse.Query(Patient).equalTo('objectId', id).first();
+  }
+
   static createEmptyPatient() {
     const p = new Patient();
     p.setFirstName('');
@@ -392,7 +396,7 @@ class Mission extends Parse.Object {
   }
 
   addPatient(patient: string | Patient) {
-    this.add('patients', patient);
+    this.set('patients', [patient]);
   }
 
   getLocation() {

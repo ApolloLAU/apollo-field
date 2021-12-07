@@ -15,7 +15,7 @@ import styles from "../utils/Styles";
 import config from "../utils/ConfigECG";
 import BluetoothIcon from "../assets/svg/bluetooth.svg";
 import Modal from "react-native-modal";
-import { API, Mission, SensorData } from "../api/API";
+import {API, Mission, Patient, SensorData} from "../api/API";
 import Carousel from "react-native-snap-carousel";
 import BottomModalIndexIndicator from "../components/BottomModalIndexIndicator";
 import Chip from "../components/Chip";
@@ -505,6 +505,16 @@ class MissionScreen extends Component {
 
   async getPatientInfoFromQRCode(id) {
     console.log(id);
+    const m = this.state.mission;
+    if (m) {
+        const p = await Patient.getById(id);
+        if (p) {
+            console.log('setting mission patient!')
+            m.addPatient(p);
+            await m.save();
+            await this.fetchCurrentMission(m);
+        }
+    }
   }
 
   // todo: idk if this is possible, but when only one patient, carousel shouldn't show the single dot cuz it doesn't make sense.
