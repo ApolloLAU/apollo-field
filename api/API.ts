@@ -236,7 +236,7 @@ class SensorData extends Parse.Object {
   }
 
   addRawECGValues(values: number[]) {
-    this.set('raw_ECG', values);
+    this.set('ECG', values);
   }
 
   getCleanECGVals() {

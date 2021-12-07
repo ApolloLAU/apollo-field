@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "Apollo",
-    "slug": "Apollo Field",
+    "slug": "Apollo",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/png/apollo_splash.png",
